@@ -14,7 +14,8 @@ export async function GET(request: Request) {
     // Whitelist allowed files for security
     const allowedFiles = [
       '003_add_project_balances.sql',
-      'create-withdrawal-requests.sql'
+      'create-withdrawal-requests.sql',
+      '004_complete_withdrawal_system.sql'
     ];
 
     if (!allowedFiles.includes(filename)) {

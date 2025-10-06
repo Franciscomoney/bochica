@@ -165,12 +165,20 @@ export default function ProjectDetailPage() {
 
       if (commitError) throw commitError;
 
-      // Step 5: Update project funding
+      // Step 5: Update project funding AND status if fully funded
+      const newFunding = project.current_funding + netAmount;
+      const updateData: any = {
+        current_funding: newFunding
+      };
+
+      // Auto-update status to 'funded' when goal is reached
+      if (newFunding >= project.goal_amount && project.status === 'active') {
+        updateData.status = 'funded';
+      }
+
       const { error: updateError } = await supabase
         .from('projects')
-        .update({
-          current_funding: project.current_funding + netAmount
-        })
+        .update(updateData)
         .eq('id', project.id);
 
       if (updateError) throw updateError;
@@ -484,8 +492,8 @@ export default function ProjectDetailPage() {
               <p className="font-semibold mb-1">ℹ️ How it works:</p>
               <ol className="list-decimal list-inside space-y-1">
                 <li>You submit a withdrawal request</li>
-                <li>Admin processes your request and sends USDT from the escrow wallet to your address</li>
-                <li>You'll receive the funds within 24 hours</li>
+                <li>Funds are transferred immediately from the escrow wallet to your address</li>
+                <li>You'll receive the USDT instantly upon approval</li>
                 <li>A loan is created that you must repay with {project.interest_rate}% interest within 30 days</li>
               </ol>
             </div>
@@ -508,7 +516,7 @@ export default function ProjectDetailPage() {
             )}
             {withdrawSuccess && (
               <div className="mt-4 bg-white border border-green-300 text-green-800 px-4 py-3 rounded-lg">
-                ✅ Withdrawal request submitted successfully! Admin will transfer {projectBalance?.available_balance?.toFixed(2) || project.current_funding.toFixed(2)} USDT to your wallet within 24 hours. You will receive a notification when the transfer is complete.
+                ✅ Withdrawal request submitted successfully! Funds will be transferred immediately - {projectBalance?.available_balance?.toFixed(2) || project.current_funding.toFixed(2)} USDT will be sent to your wallet. You will receive a notification when the transfer is complete.
               </div>
             )}
           </div>

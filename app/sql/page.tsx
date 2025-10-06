@@ -134,6 +134,72 @@ export default function SQLDownloadPage() {
               <span>Download Migration #2</span>
             </button>
           </div>
+
+          {/* Migration 3: Complete Withdrawal System (RECOMMENDED) */}
+          <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
+            <div className="flex items-start space-x-4 mb-6">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Download className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+                  Migration #3: Complete Withdrawal System (RECOMMENDED)
+                </h2>
+                <p className="text-gray-600 mb-2">
+                  <code className="bg-gray-100 px-2 py-1 rounded text-sm">004_complete_withdrawal_system.sql</code>
+                </p>
+                <p className="text-gray-600">
+                  All-in-one migration - includes everything you need for full functionality
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-6 mb-6">
+              <h3 className="font-semibold text-gray-900 mb-3">What this migration does:</h3>
+              <ul className="space-y-2 text-gray-700">
+                <li className="flex items-start">
+                  <span className="text-purple-500 mr-2">✓</span>
+                  Creates/updates project_balances table
+                </li>
+                <li className="flex items-start">
+                  <span className="text-purple-500 mr-2">✓</span>
+                  Creates withdrawal_requests table
+                </li>
+                <li className="flex items-start">
+                  <span className="text-purple-500 mr-2">✓</span>
+                  Fixes loans table status constraint
+                </li>
+                <li className="flex items-start">
+                  <span className="text-purple-500 mr-2">✓</span>
+                  Auto-updates project status to 'funded'
+                </li>
+                <li className="flex items-start">
+                  <span className="text-purple-500 mr-2">✓</span>
+                  Auto-updates balances on investments
+                </li>
+                <li className="flex items-start">
+                  <span className="text-purple-500 mr-2">✓</span>
+                  Includes verification queries
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+              <p className="text-sm text-purple-800">
+                <strong>💡 Recommended:</strong> Use this migration instead of #1 and #2. It includes everything and fixes all known issues.
+              </p>
+            </div>
+
+            <button
+              onClick={() => handleDownload('004_complete_withdrawal_system.sql')}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center space-x-2"
+            >
+              <Download className="w-5 h-5" />
+              <span>Download Complete Migration</span>
+            </button>
+          </div>
         </div>
 
         {/* Instructions */}
@@ -164,7 +230,7 @@ export default function SQLDownloadPage() {
             </li>
             <li className="flex items-start">
               <span className="font-semibold text-blue-600 mr-3">4.</span>
-              <span><strong>Run Migration #1 first</strong>, then Migration #2 (order matters!)</span>
+              <span><strong>Use Migration #3 (recommended)</strong> OR run Migration #1 first, then #2 (order matters!)</span>
             </li>
             <li className="flex items-start">
               <span className="font-semibold text-blue-600 mr-3">5.</span>
