@@ -239,7 +239,25 @@ export default function ProjectDetailPage() {
         throw new Error('No funds available to withdraw');
       }
 
-      // 3. Create loan record
+      // 3. Create withdrawal request (admin will process the actual blockchain transfer)
+      const { data: withdrawalData, error: withdrawalError } = await supabase
+        .from('withdrawal_requests')
+        .insert({
+          project_id: project.id,
+          creator_address: selectedAccount.address,
+          amount: availableAmount,
+          status: 'pending',
+          requested_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (withdrawalError) {
+        console.error('Withdrawal request error:', withdrawalError);
+        throw new Error('Failed to create withdrawal request: ' + withdrawalError.message);
+      }
+
+      // 4. Calculate loan details
       const loanDueDate = new Date();
       loanDueDate.setDate(loanDueDate.getDate() + 30); // 30 days from now
 
@@ -247,6 +265,7 @@ export default function ProjectDetailPage() {
       const interestAmount = (principalAmount * project.interest_rate) / 100;
       const totalRepayment = principalAmount + interestAmount;
 
+      // 5. Create loan record (linked to withdrawal request)
       const { error: loanError } = await supabase
         .from('loans')
         .insert({
@@ -255,8 +274,9 @@ export default function ProjectDetailPage() {
           principal_amount: principalAmount,
           interest_amount: interestAmount,
           total_repayment: totalRepayment,
-          status: 'active',
-          due_date: loanDueDate.toISOString()
+          status: 'pending_disbursement',
+          due_date: loanDueDate.toISOString(),
+          withdrawal_request_id: withdrawalData.id
         });
 
       if (loanError) {
@@ -264,7 +284,7 @@ export default function ProjectDetailPage() {
         throw new Error('Failed to create loan record: ' + loanError.message);
       }
 
-      // 4. Update project balance
+      // 6. Update project balance (mark as pending withdrawal)
       const { error: updateError } = await supabase
         .from('project_balances')
         .upsert({
@@ -278,25 +298,20 @@ export default function ProjectDetailPage() {
 
       if (updateError) {
         console.error('Balance update error:', updateError);
-        throw new Error('Failed to update balance: ' + updateError.message);
       }
 
-      // 5. Update project status to 'borrowing'
-      const { error: statusError } = await supabase
+      // 7. Update project status to awaiting disbursement
+      await supabase
         .from('projects')
-        .update({ status: 'borrowing' })
+        .update({ status: 'awaiting_disbursement' })
         .eq('id', project.id);
 
-      if (statusError) {
-        console.error('Status update error:', statusError);
-      }
-
-      // 6. Create transaction record
+      // 8. Create transaction record
       await supabase
         .from('transactions')
         .insert({
           wallet_address: selectedAccount.address,
-          type: 'borrow',
+          type: 'withdrawal_request',
           amount: availableAmount,
           project_id: project.id,
           details: {
@@ -304,7 +319,8 @@ export default function ProjectDetailPage() {
             interest: interestAmount,
             total_repayment: totalRepayment,
             due_date: loanDueDate.toISOString(),
-            note: 'Funds marked for disbursement from escrow wallet'
+            withdrawal_request_id: withdrawalData.id,
+            note: 'Withdrawal request submitted. Admin will process blockchain transfer from escrow wallet.'
           }
         });
 
@@ -319,7 +335,7 @@ export default function ProjectDetailPage() {
 
     } catch (err: any) {
       console.error('Withdrawal error:', err);
-      setWithdrawError(err.message || 'Withdrawal failed. Please try again.');
+      setWithdrawError(err.message || 'Withdrawal request failed. Please try again.');
     } finally {
       setIsWithdrawing(false);
     }
@@ -456,17 +472,26 @@ export default function ProjectDetailPage() {
         {/* Withdrawal Section - Only for Project Creator */}
         {canWithdraw && (
           <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-8 text-white mb-6">
-            <h2 className="text-2xl font-bold mb-2">Withdraw Project Funds</h2>
-            <p className="mb-4 text-green-100">
-              Your project is fully funded! You can now withdraw{' '}
+            <h2 className="text-2xl font-bold mb-2">Request Withdrawal</h2>
+            <p className="mb-2 text-green-100">
+              Your project is fully funded! Click below to request withdrawal of{' '}
               <span className="font-bold text-white">
                 ${projectBalance?.available_balance?.toFixed(2) || project.current_funding.toFixed(2)} USDT
               </span>
-              {' '}to start your project.
+              {' '}to your wallet.
             </p>
+            <div className="mb-4 bg-green-700 bg-opacity-50 rounded-lg p-4 text-sm text-green-50">
+              <p className="font-semibold mb-1">ℹ️ How it works:</p>
+              <ol className="list-decimal list-inside space-y-1">
+                <li>You submit a withdrawal request</li>
+                <li>Admin processes your request and sends USDT from the escrow wallet to your address</li>
+                <li>You'll receive the funds within 24 hours</li>
+                <li>A loan is created that you must repay with {project.interest_rate}% interest within 30 days</li>
+              </ol>
+            </div>
             {projectBalance && projectBalance.withdrawn_balance > 0 && (
               <p className="mb-4 text-sm text-green-200">
-                Previously withdrawn: ${projectBalance.withdrawn_balance.toFixed(2)} USDT
+                Previously requested: ${projectBalance.withdrawn_balance.toFixed(2)} USDT
               </p>
             )}
             <button
@@ -474,7 +499,7 @@ export default function ProjectDetailPage() {
               disabled={isWithdrawing}
               className="px-8 py-4 bg-white text-green-600 rounded-lg hover:bg-gray-100 font-bold text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isWithdrawing ? 'Processing Withdrawal...' : 'Withdraw Funds'}
+              {isWithdrawing ? 'Submitting Request...' : 'Request Withdrawal'}
             </button>
             {withdrawError && (
               <div className="mt-4 bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-lg">
@@ -483,7 +508,7 @@ export default function ProjectDetailPage() {
             )}
             {withdrawSuccess && (
               <div className="mt-4 bg-white border border-green-300 text-green-800 px-4 py-3 rounded-lg">
-                ✅ Withdrawal successful! Loan created. Admin will process the transfer from escrow wallet.
+                ✅ Withdrawal request submitted successfully! Admin will transfer {projectBalance?.available_balance?.toFixed(2) || project.current_funding.toFixed(2)} USDT to your wallet within 24 hours. You will receive a notification when the transfer is complete.
               </div>
             )}
           </div>
