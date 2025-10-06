@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { useWallet } from '@/contexts/WalletContext';
@@ -22,8 +22,14 @@ interface Project {
   created_at: string;
 }
 
+interface ProjectBalance {
+  available_balance: number;
+  withdrawn_balance: number;
+}
+
 export default function ProjectDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const { isConnected, selectedAccount, assetHubBalance, dotBalance } = useWallet();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,21 +38,20 @@ export default function ProjectDetailPage() {
   // Investment UI state
   const [showInvestModal, setShowInvestModal] = useState(false);
   const [investAmount, setInvestAmount] = useState('');
-  const [lockupPeriod, setLockupPeriod] = useState<'10min' | '24h' | '7days'>('5min');
+  const [lockupPeriod, setLockupPeriod] = useState<'10min' | '24h' | '7days'>('10min');
   const [isInvesting, setIsInvesting] = useState(false);
   const [investError, setInvestError] = useState('');
   const [investSuccess, setInvestSuccess] = useState(false);
 
   // Withdraw UI state
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState('\);
+  const [projectBalance, setProjectBalance] = useState<ProjectBalance | null>(null);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
-  const [withdrawError, setWithdrawError] = useState('\);
+  const [withdrawError, setWithdrawError] = useState('');
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
-
 
   useEffect(() => {
     fetchProject();
+    fetchProjectBalance();
   }, [params.id]);
 
   const fetchProject = async () => {
@@ -65,6 +70,22 @@ export default function ProjectDetailPage() {
       setError(err.message || 'Failed to load project');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProjectBalance = async () => {
+    try {
+      const { data, error: dbError } = await supabase
+        .from('project_balances')
+        .select('available_balance, withdrawn_balance')
+        .eq('project_id', params.id)
+        .single();
+
+      if (!dbError && data) {
+        setProjectBalance(data);
+      }
+    } catch (err) {
+      console.error('Error fetching project balance:', err);
     }
   };
 
@@ -98,9 +119,9 @@ export default function ProjectDetailPage() {
       // Step 1: Execute batch transfer (fee + project amount in ONE transaction)
       const platformFee = calculatePlatformFee(amount);
       const netAmount = amount - platformFee;
-      
+
       console.log(`Investing ${amount} USDT (${platformFee.toFixed(2)} fee + ${netAmount.toFixed(2)} to project)`);
-      
+
       const transferResult = await batchInvestmentTransfer(
         selectedAccount.address,
         amount,
@@ -117,7 +138,7 @@ export default function ProjectDetailPage() {
         '24h': 24 * 60,
         '7days': 7 * 24 * 60
       };
-      
+
       const lockupMinutes = lockupMinutesMap[lockupPeriod];
       if (!lockupMinutes) {
         throw new Error();
@@ -177,6 +198,7 @@ export default function ProjectDetailPage() {
         setInvestSuccess(false);
         setInvestAmount('');
         fetchProject(); // Refresh project data
+        fetchProjectBalance(); // Refresh balance
       }, 3000);
 
     } catch (err: any) {
@@ -184,6 +206,122 @@ export default function ProjectDetailPage() {
       setInvestError(err.message || 'Investment failed. Please try again.');
     } finally {
       setIsInvesting(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (!selectedAccount || !project) return;
+
+    setIsWithdrawing(true);
+    setWithdrawError('');
+
+    try {
+      // 1. Fetch current project balance
+      const { data: balanceData, error: balanceError } = await supabase
+        .from('project_balances')
+        .select('available_balance, withdrawn_balance')
+        .eq('project_id', project.id)
+        .single();
+
+      if (balanceError && balanceError.code !== 'PGRST116') {
+        // PGRST116 = no rows found, which is OK for first withdrawal
+        throw new Error('Unable to fetch project balance: ' + balanceError.message);
+      }
+
+      const availableAmount = balanceData ? parseFloat(balanceData.available_balance.toString()) : project.current_funding;
+
+      // 2. Validate project is fully funded
+      if (project.current_funding < project.goal_amount) {
+        throw new Error('Project must be fully funded before withdrawal');
+      }
+
+      if (availableAmount <= 0) {
+        throw new Error('No funds available to withdraw');
+      }
+
+      // 3. Create loan record
+      const loanDueDate = new Date();
+      loanDueDate.setDate(loanDueDate.getDate() + 30); // 30 days from now
+
+      const principalAmount = availableAmount;
+      const interestAmount = (principalAmount * project.interest_rate) / 100;
+      const totalRepayment = principalAmount + interestAmount;
+
+      const { error: loanError } = await supabase
+        .from('loans')
+        .insert({
+          project_id: project.id,
+          borrower_address: selectedAccount.address,
+          principal_amount: principalAmount,
+          interest_amount: interestAmount,
+          total_repayment: totalRepayment,
+          status: 'active',
+          due_date: loanDueDate.toISOString()
+        });
+
+      if (loanError) {
+        console.error('Loan record error:', loanError);
+        throw new Error('Failed to create loan record: ' + loanError.message);
+      }
+
+      // 4. Update project balance
+      const { error: updateError } = await supabase
+        .from('project_balances')
+        .upsert({
+          project_id: project.id,
+          available_balance: 0,
+          withdrawn_balance: availableAmount,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'project_id'
+        });
+
+      if (updateError) {
+        console.error('Balance update error:', updateError);
+        throw new Error('Failed to update balance: ' + updateError.message);
+      }
+
+      // 5. Update project status to 'borrowing'
+      const { error: statusError } = await supabase
+        .from('projects')
+        .update({ status: 'borrowing' })
+        .eq('id', project.id);
+
+      if (statusError) {
+        console.error('Status update error:', statusError);
+      }
+
+      // 6. Create transaction record
+      await supabase
+        .from('transactions')
+        .insert({
+          wallet_address: selectedAccount.address,
+          type: 'borrow',
+          amount: availableAmount,
+          project_id: project.id,
+          details: {
+            principal: principalAmount,
+            interest: interestAmount,
+            total_repayment: totalRepayment,
+            due_date: loanDueDate.toISOString(),
+            note: 'Funds marked for disbursement from escrow wallet'
+          }
+        });
+
+      // Success!
+      setWithdrawSuccess(true);
+      setTimeout(() => {
+        setWithdrawSuccess(false);
+        fetchProject(); // Refresh project data
+        fetchProjectBalance(); // Refresh balance
+        router.refresh();
+      }, 3000);
+
+    } catch (err: any) {
+      console.error('Withdrawal error:', err);
+      setWithdrawError(err.message || 'Withdrawal failed. Please try again.');
+    } finally {
+      setIsWithdrawing(false);
     }
   };
 
@@ -224,6 +362,7 @@ export default function ProjectDetailPage() {
   const progress = calculateFundingPercentage(project.current_funding, project.goal_amount);
   const isFullyFunded = progress >= 100;
   const isCreator = selectedAccount?.address === project.creator_address;
+  const canWithdraw = isCreator && isFullyFunded && project.status === 'funded';
   const amount = parseFloat(investAmount) || 0;
   const platformFee = calculatePlatformFee(amount);
   const netAmount = amount - platformFee;
@@ -313,6 +452,42 @@ export default function ProjectDetailPage() {
             {project.description}
           </p>
         </div>
+
+        {/* Withdrawal Section - Only for Project Creator */}
+        {canWithdraw && (
+          <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-8 text-white mb-6">
+            <h2 className="text-2xl font-bold mb-2">Withdraw Project Funds</h2>
+            <p className="mb-4 text-green-100">
+              Your project is fully funded! You can now withdraw{' '}
+              <span className="font-bold text-white">
+                ${projectBalance?.available_balance?.toFixed(2) || project.current_funding.toFixed(2)} USDT
+              </span>
+              {' '}to start your project.
+            </p>
+            {projectBalance && projectBalance.withdrawn_balance > 0 && (
+              <p className="mb-4 text-sm text-green-200">
+                Previously withdrawn: ${projectBalance.withdrawn_balance.toFixed(2)} USDT
+              </p>
+            )}
+            <button
+              onClick={handleWithdraw}
+              disabled={isWithdrawing}
+              className="px-8 py-4 bg-white text-green-600 rounded-lg hover:bg-gray-100 font-bold text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isWithdrawing ? 'Processing Withdrawal...' : 'Withdraw Funds'}
+            </button>
+            {withdrawError && (
+              <div className="mt-4 bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-lg">
+                {withdrawError}
+              </div>
+            )}
+            {withdrawSuccess && (
+              <div className="mt-4 bg-white border border-green-300 text-green-800 px-4 py-3 rounded-lg">
+                ✅ Withdrawal successful! Loan created. Admin will process the transfer from escrow wallet.
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Investment Section */}
         {isConnected && !isCreator && project.status === 'active' && (
