@@ -471,7 +471,7 @@ The following sensitive information has been replaced with placeholders:
 | Item | Placeholder | What You Need |
 |------|-------------|---------------|
 | Server Address | `localhost:3000` | Your production server IP and port |
-| Supabase Project | `your-supabase-project-id` | Your actual Supabase project ID |
+| Supabase Project | `fvehyzvdffnxrmupwgtv` | Your actual Supabase project ID |
 | Platform Wallet | `5EXAMPLE_PLATFORM_WALLET...` | Your Polkadot platform commission wallet |
 | Escrow Wallet | `5EXAMPLE_ESCROW_WALLET...` | Your Polkadot escrow wallet address |
 | Admin Password | `CHANGE_ME_IN_PRODUCTION` | A strong, unique password |

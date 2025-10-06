@@ -56,7 +56,7 @@ async function verifyData() {
     console.log('✅ Project status:', project.status);
     console.log('✅ Available balance:', balance.available_balance);
     console.log('\nWithdrawal button should now be visible at:');
-    console.log('http://localhost:3000/project/' + projectId);
+    console.log('https://51.178.253.51:8100/project/' + projectId);
   } else {
     console.log('⚠️ Some data missing - check errors above');
   }

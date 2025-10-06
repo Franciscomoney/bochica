@@ -49,7 +49,7 @@ async function testWithdrawalButton() {
   
   if (shouldShowButton) {
     console.log('\n✅ ALL CONDITIONS MET! Withdrawal button should now appear.');
-    console.log('   View project at: http://localhost:3000/project/' + projectId);
+    console.log('   View project at: https://51.178.253.51:8100/project/' + projectId);
   }
 }
 
