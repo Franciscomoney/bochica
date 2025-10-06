@@ -39,3 +39,26 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Sensitive files
+*.pem
+*.key
+private-keys/
+credentials.json
+ADMIN_CREDENTIALS.txt
+
+# Backups
+*.sql
+*.backup
+*.tar.gz
+.sanitization-backup/
+
+# Old backups with sensitive data
+*.backup-*
+README.md.backup*

@@ -15,12 +15,12 @@ All transactions happen on **Polkadot Asset Hub** only!
 ### When Lender Commits Funds:
 
 1. **Platform Fee (2%)** → Bochica Commission Wallet
-   - Wallet: `13H5V7W5YHNNXh5bhMxXLEw4boe6R6mxEG5SFAThYyYteFLy`
+   - Wallet: `5EXAMPLE_PLATFORM_WALLET_ADDRESS_PLACEHOLDER`
    - Immediate transfer
    - Recorded in database
 
 2. **Net Amount (98%)** → Project Escrow Wallet
-   - Wallet: `15SF1r3zuTgRB8yt6mDSTcXtaQZqVv1YpDCyUoV7E3bSJfSf`
+   - Wallet: `5EXAMPLE_ESCROW_WALLET_ADDRESS_PLACEHOLDER`
    - Held in escrow until project reaches funding goal
    - All commitments accumulate here
 
@@ -43,10 +43,10 @@ All transactions happen on **Polkadot Asset Hub** only!
 ### 1. Environment Variables (`.env.local`)
 ```bash
 # Commission wallet (receives 2% fee)
-NEXT_PUBLIC_BOCHICA_WALLET=13H5V7W5YHNNXh5bhMxXLEw4boe6R6mxEG5SFAThYyYteFLy
+NEXT_PUBLIC_BOCHICA_WALLET=5EXAMPLE_PLATFORM_WALLET_ADDRESS_PLACEHOLDER
 
 # Escrow wallet (holds committed funds)
-NEXT_PUBLIC_PROJECT_ESCROW_WALLET=15SF1r3zuTgRB8yt6mDSTcXtaQZqVv1YpDCyUoV7E3bSJfSf
+NEXT_PUBLIC_PROJECT_ESCROW_WALLET=5EXAMPLE_ESCROW_WALLET_ADDRESS_PLACEHOLDER
 ```
 
 ### 2. New Function (`lib/polkadot.ts`)
@@ -131,7 +131,7 @@ CREATE TABLE commitments (
 
 - **Date**: Thu Oct  2 09:59:56 AM UTC 2025
 - **Version**: Escrow Model v1.0
-- **URL**: https://51.178.253.51:8100
+- **URL**: http://localhost:3000
 - **Status**: ✅ Running
 
 ---

@@ -2,7 +2,7 @@
 
 ## ✅ SUCCESSFULLY DEPLOYED
 
-**Access URL**: http://155.138.165.47:8100
+**Access URL**: http://localhost:3000
 
 ### Server Status
 - ✅ Port 8100 firewall OPEN
@@ -59,7 +59,7 @@
 ### How to Access
 
 #### From Browser:
-1. Navigate to: **http://155.138.165.47:8100**
+1. Navigate to: **http://localhost:3000**
 2. Wait 30-60 seconds for first load (Next.js compiles on first request)
 3. Page will display with "Connect Talisman" button
 
@@ -144,7 +144,7 @@ npm start -- -p 8100
 
 ## Next Steps for User
 
-1. **Test the site**: Visit http://155.138.165.47:8100 (be patient on first load)
+1. **Test the site**: Visit http://localhost:3000 (be patient on first load)
 2. **Review the UI**: Check if the design meets expectations
 3. **Set up Supabase**: Follow SETUP.md to configure database
 4. **Add .env.local**: Add Supabase credentials
@@ -162,6 +162,6 @@ npm start -- -p 8100
 
 ---
 
-**The app is LIVE and accessible at http://155.138.165.47:8100**
+**The app is LIVE and accessible at http://localhost:3000**
 
 Just be patient on the first load - Next.js needs to compile!

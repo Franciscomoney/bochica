@@ -28,9 +28,9 @@ A blockchain-powered micro-lending platform built on Polkadot's parachain archit
 
 ## 🚀 Live Demo
 
-**Production URL**: [https://51.178.253.51:8100](https://localhost.com)
+**Production URL**: [http://localhost:3000](https://localhost.com)
 
-**Admin Dashboard**: [https://51.178.253.51:8100/admin](https://localhost.com)
+**Admin Dashboard**: [http://localhost:3000/admin](https://localhost.com)
 - Username: `admin`
 - Password: `yourpassword`
 
@@ -182,7 +182,7 @@ bochica/
 ## 🚀 Deployment (OVH Server)
 
 ### Server Details
-- **Host**: 51.178.253.51
+- **Host**: your-server-ip
 - **Port**: 8100 (HTTPS)
 - **PM2 Process**: `bochica`
 - **Location**: `/home/debian/bochica/`
@@ -190,7 +190,7 @@ bochica/
 ### PM2 Commands
 ```bash
 # SSH to OVH
-ssh -i /root/coding/claudecode/projects/ovh/keys/ovh_master debian@51.178.253.51
+ssh -i /path/to/your/key your-user@your-server-ip
 
 # Manage process
 pm2 list
@@ -363,7 +363,7 @@ Run SQL files in Supabase SQL Editor:
 
 ## 📝 Admin Dashboard
 
-**Access**: https://51.178.253.51:8100/admin
+**Access**: http://localhost:3000/admin
 
 **Features**:
 - Total funding across all projects
@@ -437,3 +437,70 @@ Built with:
 **Designed, conceived, and coded by Francisco Cordoba Otalora**
 
 © 2025 Francisco Cordoba Otalora. All rights reserved.
+
+---
+
+## 🔒 Security & Configuration
+
+### Important Security Notice
+
+**This repository contains placeholder values for sensitive information.** Before deploying to production:
+
+1. **Copy the environment template:**
+   ```bash
+   cp .env.example .env.local
+   ```
+
+2. **Replace ALL placeholder values in `.env.local` with your actual credentials:**
+   - Supabase project URL and anon key
+   - Polkadot wallet addresses (platform and escrow)
+   - Admin username and password
+   - Admin session secret
+
+3. **NEVER commit the following to version control:**
+   - `.env.local` or any `.env` files with real credentials
+   - Private keys (`.pem`, `.key` files)
+   - Wallet seed phrases or mnemonics
+   - Production server addresses
+   - Real Supabase credentials
+
+### What Has Been Sanitized
+
+The following sensitive information has been replaced with placeholders:
+
+| Item | Placeholder | What You Need |
+|------|-------------|---------------|
+| Server Address | `localhost:3000` | Your production server IP and port |
+| Supabase Project | `your-supabase-project-id` | Your actual Supabase project ID |
+| Platform Wallet | `5EXAMPLE_PLATFORM_WALLET...` | Your Polkadot platform commission wallet |
+| Escrow Wallet | `5EXAMPLE_ESCROW_WALLET...` | Your Polkadot escrow wallet address |
+| Admin Password | `CHANGE_ME_IN_PRODUCTION` | A strong, unique password |
+| Admin Secret | `change-this-to-random-secret...` | A random 32+ character secret |
+
+### Setting Up Your Wallets
+
+1. **Create two Polkadot wallets** using [Talisman](https://talisman.xyz/) or [Polkadot.js](https://polkadot.js.org/):
+   - **Platform Wallet**: Receives commission fees (2% by default)
+   - **Escrow Wallet**: Holds investor funds until projects are fully funded
+
+2. **Fund the wallets** with DOT for transaction fees
+
+3. **Add wallet addresses** to your `.env.local` file
+
+### Production Deployment Checklist
+
+- [ ] Create `.env.local` from `.env.example`
+- [ ] Replace all placeholder values
+- [ ] Generate strong, unique admin password
+- [ ] Generate random session secret (32+ characters)
+- [ ] Set up production Supabase project
+- [ ] Create and fund platform and escrow wallets
+- [ ] Configure server with HTTPS
+- [ ] Test all features with real transactions
+- [ ] Enable database backups
+- [ ] Set up monitoring and logging
+
+### Support
+
+For questions about security or configuration, please open an issue on GitHub.
+

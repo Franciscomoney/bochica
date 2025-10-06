@@ -2,7 +2,7 @@
 
 ## ✅ FULLY WORKING NOW
 
-**Access**: https://155.138.165.47:8100
+**Access**: https://localhost:3000
 
 ### What's Complete and Working
 
@@ -260,7 +260,7 @@ export default function CreateProjectPage() {
 
 ## Current User Experience
 
-1. **Visit** https://155.138.165.47:8100
+1. **Visit** https://localhost:3000
 2. **Accept** the self-signed certificate warning
 3. **Click** "Connect Talisman" in header
 4. **Approve** connection in Talisman popup

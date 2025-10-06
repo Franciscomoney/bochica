@@ -75,7 +75,7 @@ sudo ufw allow 8100
 npm run dev -- -p 8100
 
 # Access at
-http://155.138.165.47:8100
+http://localhost:3000
 ```
 
 ## 📝 EXACT NEXT STEPS

@@ -4,11 +4,11 @@
 The Bochica platform now automatically transfers the 2% platform fee to the designated Bochica commission wallet during each investment transaction.
 
 ## Commission Wallet Address
-**Polkadot Asset Hub Address**: `13H5V7W5YHNNXh5bhMxXLEw4boe6R6mxEG5SFAThYyYteFLy`
+**Polkadot Asset Hub Address**: `5EXAMPLE_PLATFORM_WALLET_ADDRESS_PLACEHOLDER`
 
 This wallet is configured in `.env.local` as:
 ```
-NEXT_PUBLIC_BOCHICA_WALLET=13H5V7W5YHNNXh5bhMxXLEw4boe6R6mxEG5SFAThYyYteFLy
+NEXT_PUBLIC_BOCHICA_WALLET=5EXAMPLE_PLATFORM_WALLET_ADDRESS_PLACEHOLDER
 ```
 
 ## How It Works
@@ -73,7 +73,7 @@ To check the current balance of the commission wallet:
    - Visit https://polkadot.js.org/apps/?rpc=wss://polkadot-asset-hub-rpc.polkadot.io#/assets
    - Navigate to Network > Assets
    - Search for USDT (Asset ID 1984)
-   - Enter wallet address: `13H5V7W5YHNNXh5bhMxXLEw4boe6R6mxEG5SFAThYyYteFLy`
+   - Enter wallet address: `5EXAMPLE_PLATFORM_WALLET_ADDRESS_PLACEHOLDER`
 
 2. **Via Subscan**:
    - Visit https://assethub-polkadot.subscan.io/
@@ -103,7 +103,7 @@ CREATE TABLE commitments (
 
 Changes were deployed on: **Thu Oct  2 09:44:37 AM UTC 2025**
 
-Application status: **Running on https://51.178.253.51:8100**
+Application status: **Running on http://localhost:3000**
 
 ## Backup Files Created
 

@@ -12,7 +12,7 @@ This document provides the exact code needed to complete the Bochica platform.
 
 **Credentials**:
 - Username: `admin`
-- Password: `Bochica2025!`
+- Password: `CHANGE_ME_IN_PRODUCTION`
 
 Create `app/admin/page.tsx`:
 
@@ -374,11 +374,11 @@ Due to token limits, I've provided the key files above. The complete implementat
 1. **Restart server** to load new env vars
 2. **Create remaining files** from templates above
 3. **Test workflows**:
-   - Admin: https://155.138.165.47:8100/admin
-   - Projects: https://155.138.165.47:8100/projects
+   - Admin: https://localhost:3000/admin
+   - Projects: https://localhost:3000/projects
 4. **Connect to Supabase** for persistence
 
 **Admin Access**:
-- URL: https://155.138.165.47:8100/admin
+- URL: https://localhost:3000/admin
 - Username: `admin`
-- Password: `Bochica2025!`
+- Password: `CHANGE_ME_IN_PRODUCTION`

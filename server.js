@@ -33,6 +33,6 @@ app.prepare().then(() => {
     })
     .listen(port, () => {
       console.log(`> Ready on https://${hostname}:${port}`);
-      console.log(`> Access at https://51.178.253.51:${port}`);
+      console.log(`> Access at http://localhost:${port}`);
     });
 });
