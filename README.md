@@ -8,7 +8,7 @@
 
 **For people who have extra money sitting around**, Bochica lets them help others while earning a bit of money back - kind of like planting seeds in a garden and watching them grow. You pick a project you like (maybe you love the idea of homemade cookies!), put your money in, and the computer system keeps track of everything automatically. When the person pays you back, you get your money plus a little bonus. It's all transparent and safe because it uses something called "blockchain" - think of it as a special notebook that everyone can see but nobody can erase or cheat with.
 
-**Live Platform**: https://51.178.253.51:8100
+**Live Platform**: [https://localhost.com](https://localhost.com)
 
 ---
 
@@ -18,7 +18,7 @@
 
 **Para las personas que tienen dinero extra guardado**, Bochica les permite ayudar a otros mientras ganan un poco de dinero de vuelta - como plantar semillas en un jardín y verlas crecer. Eliges un proyecto que te guste (¡tal vez te encanta la idea de las galletas caseras!), pones tu dinero, y el sistema de computadora lleva el control de todo automáticamente. Cuando la persona te devuelve el dinero, recibes tu dinero más un pequeño bono. Todo es transparente y seguro porque usa algo llamado "blockchain" - piénsalo como un cuaderno especial que todos pueden ver pero nadie puede borrar o hacer trampa.
 
-**Plataforma en Vivo**: https://51.178.253.51:8100
+**Plataforma en Vivo**: [https://localhost.com](https://localhost.com)
 
 ---
 
@@ -28,11 +28,11 @@ A blockchain-powered micro-lending platform built on Polkadot's parachain archit
 
 ## 🚀 Live Demo
 
-**Production URL**: https://51.178.253.51:8100
+**Production URL**: [https://51.178.253.51:8100](https://localhost.com)
 
-**Admin Dashboard**: https://51.178.253.51:8100/admin
+**Admin Dashboard**: [https://51.178.253.51:8100/admin](https://localhost.com)
 - Username: `admin`
-- Password: `Bochica2025!`
+- Password: `yourpassword`
 
 ---
 
@@ -214,7 +214,7 @@ Create `.env.local`:
 
 ```env
 # Supabase (Production)
-NEXT_PUBLIC_SUPABASE_URL=https://fvehyzvdffnxrmupwgtv.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://yoursupabase.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 
 # Polkadot RPC Endpoints
@@ -231,7 +231,7 @@ NEXT_PUBLIC_PROJECT_ESCROW_WALLET=your_escrow_wallet_address
 
 # Admin Credentials
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=Bochica2025!
+ADMIN_PASSWORD=yourpassword!
 ```
 
 ---
