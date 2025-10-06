@@ -218,132 +218,52 @@ export default function ProjectDetailPage() {
   };
 
   const handleWithdraw = async () => {
-    if (!selectedAccount || !project) return;
+    if (!selectedAccount || !project) {
+      setWithdrawError('Please connect your wallet first');
+      return;
+    }
 
     setIsWithdrawing(true);
     setWithdrawError('');
 
     try {
-      // 1. Fetch current project balance
-      const { data: balanceData, error: balanceError } = await supabase
-        .from('project_balances')
-        .select('available_balance, withdrawn_balance')
-        .eq('project_id', project.id)
-        .single();
-
-      if (balanceError && balanceError.code !== 'PGRST116') {
-        // PGRST116 = no rows found, which is OK for first withdrawal
-        throw new Error('Unable to fetch project balance: ' + balanceError.message);
-      }
-
-      const availableAmount = balanceData ? parseFloat(balanceData.available_balance.toString()) : project.current_funding;
-
-      // 2. Validate project is fully funded
-      if (project.current_funding < project.goal_amount) {
-        throw new Error('Project must be fully funded before withdrawal');
-      }
-
-      if (availableAmount <= 0) {
-        throw new Error('No funds available to withdraw');
-      }
-
-      // 3. Create withdrawal request (admin will process the actual blockchain transfer)
-      const { data: withdrawalData, error: withdrawalError } = await supabase
-        .from('withdrawal_requests')
-        .insert({
-          project_id: project.id,
-          creator_address: selectedAccount.address,
-          amount: availableAmount,
-          status: 'pending',
-          requested_at: new Date().toISOString()
+      // Call backend API to process real blockchain withdrawal
+      const response = await fetch('/api/withdraw', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          projectId: project.id,
+          creatorAddress: selectedAccount.address
         })
-        .select()
-        .single();
+      });
 
-      if (withdrawalError) {
-        console.error('Withdrawal request error:', withdrawalError);
-        throw new Error('Failed to create withdrawal request: ' + withdrawalError.message);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Withdrawal failed');
       }
 
-      // 4. Calculate loan details
-      const loanDueDate = new Date();
-      loanDueDate.setDate(loanDueDate.getDate() + 30); // 30 days from now
+      // Success! Show transaction details
+      console.log('Withdrawal successful:', data);
+      console.log(`Transaction hash: ${data.txHash}`);
+      console.log(`Amount: ${data.amount} USDT`);
+      console.log(`Loan repayment: ${data.totalRepayment} USDT due ${data.dueDate}`);
 
-      const principalAmount = availableAmount;
-      const interestAmount = (principalAmount * project.interest_rate) / 100;
-      const totalRepayment = principalAmount + interestAmount;
-
-      // 5. Create loan record (linked to withdrawal request)
-      const { error: loanError } = await supabase
-        .from('loans')
-        .insert({
-          project_id: project.id,
-          borrower_address: selectedAccount.address,
-          principal_amount: principalAmount,
-          interest_amount: interestAmount,
-          total_repayment: totalRepayment,
-          status: 'pending_disbursement',
-          due_date: loanDueDate.toISOString(),
-          withdrawal_request_id: withdrawalData.id
-        });
-
-      if (loanError) {
-        console.error('Loan record error:', loanError);
-        throw new Error('Failed to create loan record: ' + loanError.message);
-      }
-
-      // 6. Update project balance (mark as pending withdrawal)
-      const { error: updateError } = await supabase
-        .from('project_balances')
-        .upsert({
-          project_id: project.id,
-          available_balance: 0,
-          withdrawn_balance: availableAmount,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'project_id'
-        });
-
-      if (updateError) {
-        console.error('Balance update error:', updateError);
-      }
-
-      // 7. Update project status to awaiting disbursement
-      await supabase
-        .from('projects')
-        .update({ status: 'awaiting_disbursement' })
-        .eq('id', project.id);
-
-      // 8. Create transaction record
-      await supabase
-        .from('transactions')
-        .insert({
-          wallet_address: selectedAccount.address,
-          type: 'withdrawal_request',
-          amount: availableAmount,
-          project_id: project.id,
-          details: {
-            principal: principalAmount,
-            interest: interestAmount,
-            total_repayment: totalRepayment,
-            due_date: loanDueDate.toISOString(),
-            withdrawal_request_id: withdrawalData.id,
-            note: 'Withdrawal request submitted. Admin will process blockchain transfer from escrow wallet.'
-          }
-        });
-
-      // Success!
       setWithdrawSuccess(true);
+
+      // Refresh data after 3 seconds
       setTimeout(() => {
         setWithdrawSuccess(false);
-        fetchProject(); // Refresh project data
-        fetchProjectBalance(); // Refresh balance
+        fetchProject();
+        fetchProjectBalance();
         router.refresh();
       }, 3000);
 
     } catch (err: any) {
       console.error('Withdrawal error:', err);
-      setWithdrawError(err.message || 'Withdrawal request failed. Please try again.');
+      setWithdrawError(err.message || 'Withdrawal failed. Please try again.');
     } finally {
       setIsWithdrawing(false);
     }
