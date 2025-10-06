@@ -1,0 +1,549 @@
+'use client';
+
+import { ApiPromise, WsProvider } from '@polkadot/api';
+import type { InjectedAccountWithMeta } from '@polkadot/extension-inject/types';
+
+// Polkadot API instances
+let assetHubApi: ApiPromise | null = null;
+let moonbeamApi: ApiPromise | null = null;
+let relayChainApi: ApiPromise | null = null;
+
+// Initialize Asset Hub connection
+export const initAssetHub = async (): Promise<ApiPromise> => {
+  if (assetHubApi) return assetHubApi;
+
+  const provider = new WsProvider(process.env.NEXT_PUBLIC_ASSET_HUB_WSS);
+  assetHubApi = await ApiPromise.create({ provider });
+
+  return assetHubApi;
+};
+
+// Initialize Moonbeam connection
+export const initMoonbeam = async (): Promise<ApiPromise> => {
+  if (moonbeamApi) return moonbeamApi;
+
+  const provider = new WsProvider(process.env.NEXT_PUBLIC_MOONBEAM_WSS);
+  moonbeamApi = await ApiPromise.create({ provider });
+
+  return moonbeamApi;
+};
+
+
+// Initialize Polkadot Relay Chain connection
+export const initRelayChain = async (): Promise<ApiPromise> => {
+  if (relayChainApi) return relayChainApi;
+
+  const provider = new WsProvider("wss://rpc.polkadot.io");
+  relayChainApi = await ApiPromise.create({ provider });
+
+  return relayChainApi;
+};
+
+
+// Enable Talisman wallet extension
+export const enableWallet = async (): Promise<InjectedAccountWithMeta[]> => {
+  if (typeof window === 'undefined') {
+    throw new Error('Wallet can only be accessed in browser');
+  }
+
+  const { web3Enable, web3Accounts } = await import('@polkadot/extension-dapp');
+
+  // Give extension time to inject itself into the page
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // Try to enable the extension
+  let extensions;
+  try {
+    extensions = await web3Enable('Bochica');
+  } catch (error) {
+    console.error('Error enabling wallet:', error);
+    throw new Error('Failed to connect to wallet. Please make sure Talisman is installed and try refreshing the page.');
+  }
+
+  // Check if any extensions were found
+  if (!extensions || extensions.length === 0) {
+    // Provide detailed debugging info
+    const hasInjected = !!(window as any).injectedWeb3;
+    const walletKeys = hasInjected ? Object.keys((window as any).injectedWeb3) : [];
+
+    let errorMsg = 'No Polkadot wallet extension found. ';
+
+    if (hasInjected && walletKeys.length > 0) {
+      errorMsg += `Detected: ${walletKeys.join(', ')}. `;
+    }
+
+    errorMsg += 'Please:\n1. Install Talisman wallet\n2. Enable the extension\n3. Refresh this page\n4. Try connecting again';
+
+    throw new Error(errorMsg);
+  }
+
+  // Get accounts
+  let accounts;
+  try {
+    accounts = await web3Accounts();
+  } catch (error) {
+    console.error('Error getting accounts:', error);
+    throw new Error('Failed to get accounts from wallet. Please check Talisman permissions.');
+  }
+
+  if (!accounts || accounts.length === 0) {
+    throw new Error('No accounts found in wallet. Please create or import an account in Talisman.');
+  }
+
+  return accounts;
+};
+
+// Get USDT balance on Asset Hub
+export const getAssetHubBalance = async (address: string): Promise<number> => {
+  const api = await initAssetHub();
+  const assetId = parseInt(process.env.NEXT_PUBLIC_USDT_ASSET_ID || '1984');
+
+  try {
+    const balance = await api.query.assets.account(assetId, address);
+
+    // Check if balance exists and has data
+    if (balance && balance.isSome) {
+      const balanceValue = balance.unwrap();
+      // Convert from smallest unit (assuming 6 decimals for USDT)
+      return Number(balanceValue.balance.toString()) / 1_000_000;
+    }
+
+    return 0;
+  } catch (error) {
+    console.error('Error fetching Asset Hub balance:', error);
+    return 0;
+  }
+};
+
+// Get native DOT balance on Relay Chain (informational)
+export const getRelayChainDotBalance = async (address: string): Promise<number> => {
+  const api = await initRelayChain();
+
+  try {
+    const account = await api.query.system.account(address);
+    
+    // Log the raw data for debugging
+    console.log("DOT Balance Debug (Relay Chain):", {
+      address,
+      raw: account.toJSON(),
+      free: account.data.free.toString(),
+      reserved: account.data.reserved.toString()
+    });
+    
+    // Convert from Planck to DOT (10 decimals)
+    const dotBalance = Number(account.data.free.toString()) / 10_000_000_000;
+    
+    console.log("DOT Balance Result:", dotBalance);
+    
+    return dotBalance;
+  } catch (error) {
+    console.error("Error fetching Relay Chain DOT balance:", error);
+    return 0;
+  }
+};
+
+// Get native DOT balance on Asset Hub (for transaction fees)
+export const getAssetHubDotBalance = async (address: string): Promise<number> => {
+  const api = await initAssetHub();
+
+  try {
+    const account = await api.query.system.account(address);
+    
+    console.log("Asset Hub DOT Balance Debug:", {
+      address,
+      free: account.data.free.toString()
+    });
+    
+    // Convert from Planck to DOT (10 decimals)
+    const dotBalance = Number(account.data.free.toString()) / 10_000_000_000;
+    
+    return dotBalance;
+  } catch (error) {
+    console.error("Error fetching Asset Hub DOT balance:", error);
+    return 0;
+  }
+};
+
+
+// Get native token balance on Moonbeam
+export const getMoonbeamBalance = async (address: string): Promise<number> => {
+  const api = await initMoonbeam();
+
+  try {
+    const { data: balance } = await api.query.system.account(address);
+    // Convert from Wei (18 decimals)
+    return Number(balance.free.toString()) / 1e18;
+  } catch (error) {
+    console.error('Error fetching Moonbeam balance:', error);
+    return 0;
+  }
+};
+
+// XCM Transfer: Asset Hub → Moonbeam
+export const transferAssetHubToMoonbeam = async (
+  fromAddress: string,
+  amount: number
+): Promise<string> => {
+  if (typeof window === 'undefined') {
+    throw new Error('XCM transfer can only be executed in browser');
+  }
+
+  const { web3FromAddress } = await import('@polkadot/extension-dapp');
+  const api = await initAssetHub();
+  const injector = await web3FromAddress(fromAddress);
+
+  // Convert amount to smallest unit (6 decimals for USDT)
+  const amountInSmallestUnit = Math.floor(amount * 1_000_000);
+
+  // Moonbeam parachain ID
+  const moonbeamParaId = 2004;
+
+  // USDT asset ID on Asset Hub
+  const assetId = parseInt(process.env.NEXT_PUBLIC_USDT_ASSET_ID || '1984');
+
+  // Build XCM message
+  const destination = {
+    V3: {
+      parents: 0,
+      interior: {
+        X1: {
+          Parachain: moonbeamParaId
+        }
+      }
+    }
+  };
+
+  const beneficiary = {
+    V3: {
+      parents: 0,
+      interior: {
+        X1: {
+          AccountId32: {
+            id: fromAddress,
+            network: null
+          }
+        }
+      }
+    }
+  };
+
+  const assets = {
+    V3: [
+      {
+        id: {
+          Concrete: {
+            parents: 0,
+            interior: {
+              X2: [
+                { PalletInstance: 50 }, // Assets pallet
+                { GeneralIndex: assetId }
+              ]
+            }
+          }
+        },
+        fun: {
+          Fungible: amountInSmallestUnit
+        }
+      }
+    ]
+  };
+
+  // Execute XCM transfer
+  try {
+    const tx = api.tx.polkadotXcm.limitedReserveTransferAssets(
+      destination,
+      beneficiary,
+      assets,
+      0, // Fee asset item
+      'Unlimited' // Weight limit
+    );
+
+    const txHash = await tx.signAndSend(fromAddress, { signer: injector.signer });
+
+    return txHash.toHex();
+  } catch (error) {
+    console.error('XCM transfer failed:', error);
+    throw new Error('Failed to transfer assets via XCM');
+  }
+};
+
+// Estimate XCM transfer fee
+export const estimateXcmFee = async (): Promise<number> => {
+  // XCM fees are typically very low on Polkadot (~0.01 DOT)
+  // This is a simplified estimation
+  return 0.01;
+};
+
+// Format address for display
+export const formatAddress = (address: string, length: number = 6): string => {
+  if (!address) return '';
+  return `${address.slice(0, length)}...${address.slice(-length)}`;
+};
+
+
+// Generic XCM Asset Transfer on Asset Hub
+export const transferAssetViaXCM = async (
+  fromAddress: string,
+  toAddress: string,
+  amount: number,
+  assetId: number
+): Promise<string> => {
+  if (typeof window === 'undefined') {
+    throw new Error('Asset transfer can only be executed in browser');
+  }
+
+  const { web3FromAddress } = await import('@polkadot/extension-dapp');
+  const api = await initAssetHub();
+  const injector = await web3FromAddress(fromAddress);
+
+  // Convert amount to smallest unit (6 decimals for USDT)
+  const amountInSmallestUnit = Math.floor(amount * 1_000_000);
+
+  try {
+    const tx = api.tx.assets.transfer(
+      assetId,
+      toAddress,
+      amountInSmallestUnit
+    );
+
+    const hash = await tx.signAndSend(fromAddress, { signer: injector.signer });
+    return hash.toHex();
+  } catch (error) {
+    console.error('Asset transfer failed:', error);
+    throw new Error('Failed to transfer asset on Asset Hub');
+  }
+};
+
+// Transfer platform fee to Bochica wallet
+export const transferPlatformFee = async (
+  fromAddress: string,
+  feeAmount: number
+): Promise<{ success: boolean; transactionHash?: string; error?: string }> => {
+  const bochicaWallet = process.env.NEXT_PUBLIC_BOCHICA_WALLET;
+  
+  if (!bochicaWallet) {
+    return {
+      success: false,
+      error: 'Bochica wallet address not configured'
+    };
+  }
+
+  if (feeAmount <= 0) {
+    return {
+      success: false,
+      error: 'Fee amount must be greater than 0'
+    };
+  }
+
+  try {
+    const txHash = await transferAssetViaXCM(
+      fromAddress,
+      bochicaWallet,
+      feeAmount,
+      1984 // USDT asset ID
+    );
+
+    return {
+      success: true,
+      transactionHash: txHash
+    };
+  } catch (error: any) {
+    console.error('Platform fee transfer failed:', error);
+    return {
+      success: false,
+      error: error.message || 'Fee transfer failed'
+    };
+  }
+};
+// Validate Polkadot address
+export const isValidAddress = (address: string): boolean => {
+  try {
+    const { decodeAddress, encodeAddress } = require('@polkadot/util-crypto');
+    encodeAddress(decodeAddress(address));
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+// Transfer USDT from Asset Hub to Moonbeam (wrapper for investment flow)
+export const transferToMoonbeam = async (
+  fromAddress: string,
+  amount: number
+): Promise<{ success: boolean; transactionHash?: string; error?: string }> => {
+  try {
+    const txHash = await transferAssetViaXCM(
+      fromAddress,
+      fromAddress, // Same address on Moonbeam
+      amount,
+      1984 // USDT asset ID on Asset Hub
+    );
+
+    return {
+      success: true,
+      transactionHash: txHash
+    };
+  } catch (error: any) {
+    console.error('Transfer to Moonbeam failed:', error);
+    return {
+      success: false,
+      error: error.message || 'Transfer failed'
+    };
+  }
+};
+
+// Transfer net investment amount to project escrow wallet
+export const transferToProjectEscrow = async (
+  fromAddress: string,
+  netAmount: number
+): Promise<{ success: boolean; transactionHash?: string; error?: string }> => {
+  const escrowWallet = process.env.NEXT_PUBLIC_PROJECT_ESCROW_WALLET;
+  
+  if (!escrowWallet) {
+    return {
+      success: false,
+      error: "Project escrow wallet address not configured"
+    };
+  }
+
+  if (netAmount <= 0) {
+    return {
+      success: false,
+      error: "Net amount must be greater than 0"
+    };
+  }
+
+  try {
+    console.log(`Transferring ${netAmount} USDT to project escrow wallet...`);
+    const txHash = await transferAssetViaXCM(
+      fromAddress,
+      escrowWallet,
+      netAmount,
+      1984 // USDT asset ID
+    );
+
+    return {
+      success: true,
+      transactionHash: txHash
+    };
+  } catch (error: any) {
+    console.error("Escrow transfer failed:", error);
+    return {
+      success: false,
+      error: error.message || "Escrow transfer failed"
+    };
+  }
+};
+
+// Batch transfer: Send platform fee + project amount in ONE transaction
+export const batchInvestmentTransfer = async (
+  fromAddress: string,
+  totalAmount: number,
+  platformFee: number,
+  projectAmount: number
+): Promise<{ success: boolean; transactionHash?: string; error?: string }> => {
+  const bochicaWallet = process.env.NEXT_PUBLIC_BOCHICA_WALLET;
+  const escrowWallet = process.env.NEXT_PUBLIC_PROJECT_ESCROW_WALLET;
+  
+  if (!bochicaWallet || !escrowWallet) {
+    return {
+      success: false,
+      error: "Platform wallets not configured"
+    };
+  }
+
+  if (typeof window === "undefined") {
+    return {
+      success: false,
+      error: "Batch transfer can only be executed in browser"
+    };
+  }
+
+  try {
+    const { web3FromAddress } = await import("@polkadot/extension-dapp");
+    const api = await initAssetHub();
+    const injector = await web3FromAddress(fromAddress);
+
+    const assetId = 1984; // USDT
+    const feeAmountSmallest = Math.floor(platformFee * 1_000_000);
+    const projectAmountSmallest = Math.floor(projectAmount * 1_000_000);
+
+    // Create batch of both transfers
+    const tx = api.tx.utility.batchAll([
+      // Transfer 1: Platform fee to Bochica
+      api.tx.assets.transfer(assetId, bochicaWallet, feeAmountSmallest),
+      // Transfer 2: Project amount to Escrow
+      api.tx.assets.transfer(assetId, escrowWallet, projectAmountSmallest)
+    ]);
+
+    const hash = await tx.signAndSend(fromAddress, { signer: injector.signer });
+    
+    return {
+      success: true,
+      transactionHash: hash.toHex()
+    };
+  } catch (error: any) {
+    console.error("Batch investment transfer failed:", error);
+    return {
+      success: false,
+      error: error.message || "Batch transfer failed"
+    };
+  }
+};
+
+// Withdraw funds from escrow to creator wallet
+export const withdrawFromEscrow = async (
+  creatorAddress: string,
+  amount: number
+): Promise<{ success: boolean; transactionHash?: string; error?: string }> => {
+  const escrowWallet = process.env.NEXT_PUBLIC_PROJECT_ESCROW_WALLET;
+  
+  if (!escrowWallet) {
+    return {
+      success: false,
+      error: "Project escrow wallet not configured"
+    };
+  }
+
+  if (typeof window === "undefined") {
+    return {
+      success: false,
+      error: "Withdrawal can only be executed in browser"
+    };
+  }
+
+  try {
+    const { web3FromAddress } = await import("@polkadot/extension-dapp");
+    const api = await initAssetHub();
+    
+    // Use escrow wallet to sign (in production, escrow would be controlled by smart contract)
+    // For now, we assume creator has access or we use a different approach
+    console.warn("Note: In production, this should be controlled by smart contract logic");
+    
+    // For MVP, we'll transfer from escrow using the creator's signature
+    // This assumes the escrow releases funds when conditions are met
+    const injector = await web3FromAddress(creatorAddress);
+
+    const assetId = 1984; // USDT
+    const amountSmallest = Math.floor(amount * 1_000_000);
+
+    const tx = api.tx.assets.transfer(
+      assetId,
+      creatorAddress,
+      amountSmallest
+    );
+
+    const hash = await tx.signAndSend(creatorAddress, { signer: injector.signer });
+    
+    return {
+      success: true,
+      transactionHash: hash.toHex()
+    };
+  } catch (error: any) {
+    console.error("Withdrawal failed:", error);
+    return {
+      success: false,
+      error: error.message || "Withdrawal failed"
+    };
+  }
+};

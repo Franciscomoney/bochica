@@ -429,3 +429,11 @@ Built with:
 **Last Updated**: October 6, 2025  
 **Status**: MVP Complete ✅  
 **Next Milestone**: Borrowing System
+
+---
+
+## Author
+
+**Designed, conceived, and coded by Francisco Cordoba Otalora**
+
+© 2025 Francisco Cordoba Otalora. All rights reserved.

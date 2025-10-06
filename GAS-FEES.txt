@@ -1,0 +1,23 @@
+IMPORTANT: Gas Fees (DOT) Required
+
+Users Need TWO Tokens:
+1. USDT - for lending/borrowing
+2. DOT - for transaction fees (gas)
+
+Typical Costs on Asset Hub:
+- Each USDT transfer: ~0.01 DOT (~/bin/bash.07 USD)
+- Investment transaction: 2 transfers = ~0.02 DOT
+
+Recommended DOT Balance:
+- Lender: 0.1 DOT minimum
+- Creator: 0.5 DOT minimum
+
+Current Implementation:
+- Function added: getAssetHubDotBalance() in lib/polkadot.ts
+- NOT YET: Display DOT balance in UI
+- NOT YET: Warn users before transaction if low DOT
+- NOT YET: Check DOT before allowing transaction
+
+See full documentation: GAS-FEES-REQUIREMENTS.md (when created)
+
+CRITICAL: Users will get confusing errors if they try to transact without DOT!

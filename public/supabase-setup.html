@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bochica - Supabase Setup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">🏛️ Bochica</h1>
+            <p class="text-xl text-gray-600">Supabase Database Setup</p>
+        </div>
+
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6">
+            <h2 class="text-lg font-semibold text-blue-900 mb-3">📋 Setup Instructions</h2>
+            <ol class="list-decimal list-inside space-y-2 text-blue-800">
+                <li>Click the download button below to get the SQL file</li>
+                <li>Go to your <a href="https://supabase.com/dashboard/project/fvehyzvdffnxrmupwgtv/sql/new" target="_blank" class="underline font-semibold">Supabase SQL Editor</a></li>
+                <li>Open the downloaded SQL file and copy all contents</li>
+                <li>Paste into the Supabase SQL Editor</li>
+                <li>Click <strong>Run</strong> to create all database tables</li>
+            </ol>
+        </div>
+
+        <div class="text-center mb-6">
+            <button
+                onclick="downloadSQL()"
+                class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+                ⬇️ Download supabase-setup.sql
+            </button>
+        </div>
+
+        <div class="bg-gray-50 rounded-lg p-6 mb-6">
+            <h3 class="font-semibold text-gray-900 mb-3">What this SQL file creates:</h3>
+            <ul class="space-y-2 text-gray-700">
+                <li>✅ <strong>projects</strong> - Funding projects table</li>
+                <li>✅ <strong>commitments</strong> - Investor commitments with lockup periods</li>
+                <li>✅ <strong>loans</strong> - Borrowed funds tracking</li>
+                <li>✅ <strong>transactions</strong> - All financial movements</li>
+                <li>✅ <strong>user_balances</strong> - User balances on each chain</li>
+                <li>✅ Row Level Security (RLS) policies</li>
+                <li>✅ Database indexes for performance</li>
+                <li>✅ Triggers for automatic timestamp updates</li>
+            </ul>
+        </div>
+
+        <div class="text-center">
+            <a href="/" class="text-indigo-600 hover:text-indigo-800 font-medium">
+                ← Back to Bochica App
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const sqlContent = `-- Bochica Database Schema for Supabase
+
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Projects table
+CREATE TABLE IF NOT EXISTS projects (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  goal_amount DECIMAL(15, 2) NOT NULL,
+  current_funding DECIMAL(15, 2) DEFAULT 0,
+  status TEXT NOT NULL CHECK (status IN ('active', 'funded', 'borrowing', 'repaying', 'completed', 'cancelled')),
+  creator_address TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Commitments table (investor commitments to projects)
+CREATE TABLE IF NOT EXISTS commitments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  investor_address TEXT NOT NULL,
+  amount DECIMAL(15, 2) NOT NULL,
+  lockup_period TEXT NOT NULL CHECK (lockup_period IN ('24h', '72h', '7d')),
+  unlock_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('locked', 'unlocked', 'redeemed')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Loans table (borrowed funds from committed pool)
+CREATE TABLE IF NOT EXISTS loans (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  borrower_address TEXT NOT NULL,
+  principal_amount DECIMAL(15, 2) NOT NULL,
+  interest_amount DECIMAL(15, 2) NOT NULL,
+  total_repayment DECIMAL(15, 2) NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('active', 'repaid', 'defaulted')),
+  borrowed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  due_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  repaid_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Transactions table (all financial movements)
+CREATE TABLE IF NOT EXISTS transactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tx_type TEXT NOT NULL CHECK (tx_type IN ('commitment', 'redemption', 'borrow', 'repayment', 'platform_fee', 'interest_payment')),
+  project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
+  user_address TEXT NOT NULL,
+  amount DECIMAL(15, 2) NOT NULL,
+  platform_fee DECIMAL(15, 2) DEFAULT 0,
+  blockchain_hash TEXT,
+  status TEXT NOT NULL CHECK (status IN ('pending', 'completed', 'failed')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- User balances table (track user balances on each chain)
+CREATE TABLE IF NOT EXISTS user_balances (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_address TEXT NOT NULL,
+  chain TEXT NOT NULL CHECK (chain IN ('asset_hub', 'moonbeam')),
+  balance DECIMAL(15, 2) DEFAULT 0,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_address, chain)
+);
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_projects_creator ON projects(creator_address);
+CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
+CREATE INDEX IF NOT EXISTS idx_commitments_project ON commitments(project_id);
+CREATE INDEX IF NOT EXISTS idx_commitments_investor ON commitments(investor_address);
+CREATE INDEX IF NOT EXISTS idx_commitments_status ON commitments(status);
+CREATE INDEX IF NOT EXISTS idx_loans_project ON loans(project_id);
+CREATE INDEX IF NOT EXISTS idx_loans_borrower ON loans(borrower_address);
+CREATE INDEX IF NOT EXISTS idx_loans_status ON loans(status);
+CREATE INDEX IF NOT EXISTS idx_transactions_project ON transactions(project_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_user ON transactions(user_address);
+CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(tx_type);
+CREATE INDEX IF NOT EXISTS idx_user_balances_address ON user_balances(user_address);
+
+-- Row Level Security (RLS) Policies
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE commitments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE loans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_balances ENABLE ROW LEVEL SECURITY;
+
+-- Public read access for all tables
+CREATE POLICY "Public read access for projects" ON projects FOR SELECT USING (true);
+CREATE POLICY "Public read access for commitments" ON commitments FOR SELECT USING (true);
+CREATE POLICY "Public read access for loans" ON loans FOR SELECT USING (true);
+CREATE POLICY "Public read access for transactions" ON transactions FOR SELECT USING (true);
+CREATE POLICY "Public read access for user_balances" ON user_balances FOR SELECT USING (true);
+
+-- Allow users to insert their own records
+CREATE POLICY "Users can create projects" ON projects FOR INSERT WITH CHECK (true);
+CREATE POLICY "Users can create commitments" ON commitments FOR INSERT WITH CHECK (true);
+CREATE POLICY "Users can create loans" ON loans FOR INSERT WITH CHECK (true);
+CREATE POLICY "Users can create transactions" ON transactions FOR INSERT WITH CHECK (true);
+CREATE POLICY "Users can create balances" ON user_balances FOR INSERT WITH CHECK (true);
+
+-- Allow users to update their own records
+CREATE POLICY "Users can update their projects" ON projects FOR UPDATE USING (true);
+CREATE POLICY "Users can update their commitments" ON commitments FOR UPDATE USING (true);
+CREATE POLICY "Users can update their loans" ON loans FOR UPDATE USING (true);
+CREATE POLICY "Users can update transactions" ON transactions FOR UPDATE USING (true);
+CREATE POLICY "Users can update their balances" ON user_balances FOR UPDATE USING (true);
+
+-- Trigger to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_user_balances_updated_at BEFORE UPDATE ON user_balances
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();`;
+
+        function downloadSQL() {
+            const blob = new Blob([sqlContent], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'supabase-setup.sql';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            // Show success message
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '✅ Downloaded!';
+            button.classList.add('bg-green-600');
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('bg-green-600');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
