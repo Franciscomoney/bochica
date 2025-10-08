@@ -16,31 +16,30 @@ export default function Home() {
         {/* Hero Section */}
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Decentralized Micro-Lending
+            El Futuro de los Préstamos entre Personas
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Fund projects and help entrepreneurs grow their businesses using blockchain technology.
-            Powered by Polkadot's XCM protocol for secure cross-chain transactions.
+            Invierte en proyectos creativos y ayuda a hacerlos realidad. Gana intereses mientras apoyas sueños.
           </p>
         </div>
 
         {/* Action Cards (shown after wallet connection) */}
         {isConnected && (
           <div className="mb-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-8 text-white">
-            <h3 className="text-2xl font-bold mb-4 text-center">Get Started</h3>
-            <p className="text-center mb-6 text-purple-100">Choose what you'd like to do</p>
+            <h3 className="text-2xl font-bold mb-4 text-center">Comienza Ahora</h3>
+            <p className="text-center mb-6 text-purple-100">Elige lo que quieres hacer</p>
             <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               <button
                 onClick={() => router.push('/projects')}
                 className="bg-white text-gray-900 p-8 rounded-lg hover:shadow-xl transition-all transform hover:scale-105"
               >
                 <div className="text-5xl mb-4">💰</div>
-                <h4 className="text-2xl font-bold mb-2">Start Lending</h4>
+                <h4 className="text-2xl font-bold mb-2">Invertir en Proyectos</h4>
                 <p className="text-gray-600">
-                  Browse funding opportunities and earn returns by supporting entrepreneurs
+                  Busca proyectos interesantes y gana dinero apoyando a creativos
                 </p>
                 <div className="mt-4 text-purple-600 font-semibold">
-                  Browse Projects →
+                  Ver Proyectos →
                 </div>
               </button>
 
@@ -49,118 +48,147 @@ export default function Home() {
                 className="bg-white text-gray-900 p-8 rounded-lg hover:shadow-xl transition-all transform hover:scale-105"
               >
                 <div className="text-5xl mb-4">🚀</div>
-                <h4 className="text-2xl font-bold mb-2">Request Funding</h4>
+                <h4 className="text-2xl font-bold mb-2">Pedir Financiamiento</h4>
                 <p className="text-gray-600">
-                  Create a project and get funding from lenders to grow your business
+                  Crea tu proyecto y consigue el dinero que necesitas para tu sueño
                 </p>
                 <div className="mt-4 text-green-600 font-semibold">
-                  Create Project →
+                  Crear Proyecto →
                 </div>
               </button>
             </div>
           </div>
         )}
 
-        {/* Features */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="text-3xl mb-4">💰</div>
-            <h3 className="text-lg font-semibold mb-2">Lend to Projects</h3>
-            <p className="text-gray-600">
-              Browse projects and commit funds with transparent terms. Earn returns while helping entrepreneurs.
-            </p>
-          </div>
+        {/* Example Section - Animated Short */}
+        <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-8 mb-16 border-2 border-purple-200">
+          <h3 className="text-3xl font-bold text-center mb-8 text-gray-900">¿Cómo Funciona?</h3>
+          
+          <div className="bg-white rounded-lg p-8 shadow-lg max-w-3xl mx-auto">
+            <div className="flex items-center mb-6">
+              <div className="text-5xl mr-4">🎬</div>
+              <div>
+                <h4 className="text-2xl font-bold text-gray-900">Ejemplo: María y su Cortometraje Animado</h4>
+                <p className="text-gray-600">María quiere producir un cortometraje animado profesional</p>
+              </div>
+            </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="text-3xl mb-4">🔐</div>
-            <h3 className="text-lg font-semibold mb-2">Blockchain Secured</h3>
-            <p className="text-gray-600">
-              All transactions are recorded on Polkadot. Your funds are managed via XCM cross-chain messaging.
-            </p>
-          </div>
+            <div className="space-y-4">
+              <div className="flex items-start p-4 bg-purple-50 rounded-lg">
+                <span className="text-2xl mr-3">💡</span>
+                <div>
+                  <p className="font-semibold text-gray-900">María necesita: $500 USD</p>
+                  <p className="text-sm text-gray-600">Para animación, voces, música y post-producción</p>
+                </div>
+              </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="text-3xl mb-4">📊</div>
-            <h3 className="text-lg font-semibold mb-2">Transparent Fees</h3>
-            <p className="text-gray-600">
-              Simple 2% platform fee on commitments and redemptions. Creator-defined interest rates on loans.
-            </p>
+              <div className="flex items-start p-4 bg-blue-50 rounded-lg">
+                <span className="text-2xl mr-3">📤</span>
+                <div>
+                  <p className="font-semibold text-gray-900">María sube su proyecto a Bochica</p>
+                  <p className="text-sm text-gray-600">Con detalles del corto y plan de producción</p>
+                </div>
+              </div>
+
+              <div className="flex items-start p-4 bg-green-50 rounded-lg">
+                <span className="text-2xl mr-3">👥</span>
+                <div>
+                  <p className="font-semibold text-gray-900">Tú y otros inversores aportan dinero</p>
+                  <p className="text-sm text-gray-600">Entre todos completan los $500 USD que María necesita</p>
+                </div>
+              </div>
+
+              <div className="flex items-start p-4 bg-yellow-50 rounded-lg">
+                <span className="text-2xl mr-3">🎨</span>
+                <div>
+                  <p className="font-semibold text-gray-900">María produce su cortometraje</p>
+                  <p className="text-sm text-gray-600">Usa el dinero para crear su obra maestra</p>
+                </div>
+              </div>
+
+              <div className="flex items-start p-4 bg-purple-100 rounded-lg border-2 border-purple-300">
+                <span className="text-2xl mr-3">💰</span>
+                <div>
+                  <p className="font-semibold text-gray-900">María devuelve el dinero + 10% de interés en 30 días</p>
+                  <p className="text-sm text-gray-600">Si invertiste $500, recibes $550 de vuelta</p>
+                </div>
+              </div>
+
+              <div className="flex items-start p-4 bg-green-100 rounded-lg border-2 border-green-300">
+                <span className="text-2xl mr-3">✨</span>
+                <div>
+                  <p className="font-semibold text-gray-900">¡Tú ganas dinero ayudando creativos!</p>
+                  <p className="text-sm text-gray-600">María logró su sueño y tú ganaste intereses</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* How It Works */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-16">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">How It Works</h3>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* For Lenders */}
-            <div>
-              <h4 className="text-lg font-semibold text-purple-600 mb-4">For Lenders</h4>
-              <ol className="space-y-3">
-                <li className="flex items-start">
-                  <span className="bg-purple-100 text-purple-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">1</span>
-                  <div>
-                    <p className="font-medium">Connect your Talisman wallet</p>
-                    <p className="text-sm text-gray-600">Ensure you have USDT on Polkadot Asset Hub</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="bg-purple-100 text-purple-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">2</span>
-                  <div>
-                    <p className="font-medium">Browse and select a project</p>
-                    <p className="text-sm text-gray-600">Review project details and funding progress</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="bg-purple-100 text-purple-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">3</span>
-                  <div>
-                    <p className="font-medium">Transfer funds via XCM</p>
-                    <p className="text-sm text-gray-600">Seamlessly move USDT to Moonbeam parachain</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="bg-purple-100 text-purple-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">4</span>
-                  <div>
-                    <p className="font-medium">Commit to the project</p>
-                    <p className="text-sm text-gray-600">Choose lockup period (24h, 72h, or 7 days)</p>
-                  </div>
-                </li>
-              </ol>
+        {/* Three Simple Steps */}
+        <div className="mb-16">
+          <h3 className="text-3xl font-bold text-center mb-10 text-gray-900">Tres Pasos Simples</h3>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-white p-8 rounded-lg shadow-sm border-2 border-purple-200 text-center">
+              <div className="text-5xl mb-4">👀</div>
+              <h4 className="text-xl font-bold mb-3 text-gray-900">1. Elige un Proyecto</h4>
+              <p className="text-gray-600">
+                Mira proyectos que te gusten y revisa cuánto dinero necesitan
+              </p>
             </div>
 
-            {/* For Creators */}
-            <div>
-              <h4 className="text-lg font-semibold text-green-600 mb-4">For Creators</h4>
-              <ol className="space-y-3">
-                <li className="flex items-start">
-                  <span className="bg-green-100 text-green-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">1</span>
-                  <div>
-                    <p className="font-medium">Create your project</p>
-                    <p className="text-sm text-gray-600">Describe your business and funding goal</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="bg-green-100 text-green-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">2</span>
-                  <div>
-                    <p className="font-medium">Set your interest rate</p>
-                    <p className="text-sm text-gray-600">Define the rate you're willing to pay (0-100%)</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="bg-green-100 text-green-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">3</span>
-                  <div>
-                    <p className="font-medium">Receive lender commitments</p>
-                    <p className="text-sm text-gray-600">Track your funding progress in real-time</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="bg-green-100 text-green-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">4</span>
-                  <div>
-                    <p className="font-medium">Borrow and repay with interest</p>
-                    <p className="text-sm text-gray-600">Access your capital and repay at your set rate</p>
-                  </div>
-                </li>
-              </ol>
+            <div className="bg-white p-8 rounded-lg shadow-sm border-2 border-green-200 text-center">
+              <div className="text-5xl mb-4">💸</div>
+              <h4 className="text-xl font-bold mb-3 text-gray-900">2. Invierte tu Dinero</h4>
+              <p className="text-gray-600">
+                Envía USDT de forma segura usando tu billetera digital
+              </p>
+            </div>
+
+            <div className="bg-white p-8 rounded-lg shadow-sm border-2 border-blue-200 text-center">
+              <div className="text-5xl mb-4">🎉</div>
+              <h4 className="text-xl font-bold mb-3 text-gray-900">3. Recibe tu Dinero + Intereses</h4>
+              <p className="text-gray-600">
+                Cuando el creador pague, recibes tu inversión más las ganancias
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Key Benefits */}
+        <div className="bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl p-10 mb-16 text-white">
+          <h3 className="text-3xl font-bold text-center mb-8">¿Por Qué Bochica?</h3>
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <div className="flex items-start">
+              <span className="text-3xl mr-4">✓</span>
+              <div>
+                <p className="font-semibold text-lg">Sin bancos ni complicaciones</p>
+                <p className="text-purple-100">Todo es directo entre tú y el creador</p>
+              </div>
+            </div>
+
+            <div className="flex items-start">
+              <span className="text-3xl mr-4">✓</span>
+              <div>
+                <p className="font-semibold text-lg">Tu dinero está protegido en blockchain</p>
+                <p className="text-purple-100">Tecnología segura y transparente</p>
+              </div>
+            </div>
+
+            <div className="flex items-start">
+              <span className="text-3xl mr-4">✓</span>
+              <div>
+                <p className="font-semibold text-lg">Ganas 5-15% de interés</p>
+                <p className="text-purple-100">Mejor que un banco tradicional</p>
+              </div>
+            </div>
+
+            <div className="flex items-start">
+              <span className="text-3xl mr-4">✓</span>
+              <div>
+                <p className="font-semibold text-lg">Ayudas a personas con sueños</p>
+                <p className="text-purple-100">Apoyas talento y creatividad real</p>
+              </div>
             </div>
           </div>
         </div>
@@ -168,10 +196,10 @@ export default function Home() {
         {/* CTA */}
         {!isConnected ? (
           <div className="text-center bg-purple-50 rounded-lg p-12 border border-purple-200">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Ready to Get Started?</h3>
-            <p className="text-gray-600 mb-6">Connect your Talisman wallet to begin lending or creating projects</p>
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">¿Listo para Comenzar?</h3>
+            <p className="text-gray-600 mb-6">Conecta tu billetera Talisman para empezar a invertir o crear proyectos</p>
             <div className="text-sm text-gray-500">
-              Click "Connect Wallet" in the header above
+              Haz clic en "Conectar Billetera" arriba
             </div>
           </div>
         ) : null}
@@ -180,15 +208,15 @@ export default function Home() {
         <div className="grid grid-cols-3 gap-8 mt-16">
           <div className="text-center">
             <div className="text-3xl font-bold text-purple-600">2%</div>
-            <div className="text-gray-600 mt-2">Platform Fee</div>
+            <div className="text-gray-600 mt-2">Comisión de Plataforma</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-purple-600">0-100%</div>
-            <div className="text-gray-600 mt-2">Creator-Defined Interest</div>
+            <div className="text-3xl font-bold text-purple-600">5-15%</div>
+            <div className="text-gray-600 mt-2">Intereses para Inversores</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-purple-600">24h-7d</div>
-            <div className="text-gray-600 mt-2">Lockup Options</div>
+            <div className="text-gray-600 mt-2">Opciones de Plazo</div>
           </div>
         </div>
       </main>
@@ -196,8 +224,8 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-gray-600">
-          <p>Powered by Polkadot XCM • Built on Asset Hub and Moonbeam</p>
-          <p className="mt-2 text-sm">Bochica - Decentralized Micro-Lending Platform</p>
+          <p>Diseñado, Conceptualizado y creado por Francisco Cordoba Otalora</p>
+          <p className="mt-2 text-sm">Bochica - Plataforma de Micro-Préstamos Descentralizada</p>
         </div>
       </footer>
     </div>

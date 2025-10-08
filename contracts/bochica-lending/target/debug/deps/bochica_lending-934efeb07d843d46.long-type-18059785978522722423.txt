@@ -1,0 +1,1 @@
+std::result::Result<std::option::Option<bochica_lending::Investment>, ink::LangError>: ink::parity_scale_codec::Encode

@@ -50,8 +50,8 @@ export default function ProjectsPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Browse Projects</h1>
-          <p className="text-gray-600">Invest in projects and help entrepreneurs achieve their goals</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Explorar Proyectos</h1>
+          <p className="text-gray-600">Invierte en proyectos y ayuda a emprendedores a alcanzar sus metas</p>
         </div>
 
         {/* Filters */}
@@ -64,7 +64,7 @@ export default function ProjectsPage() {
                 : 'bg-white text-gray-700 hover:bg-gray-100'
             }`}
           >
-            All Projects
+            Todos los Proyectos
           </button>
           <button
             onClick={() => setFilter('active')}
@@ -74,7 +74,7 @@ export default function ProjectsPage() {
                 : 'bg-white text-gray-700 hover:bg-gray-100'
             }`}
           >
-            Active
+            Activos
           </button>
           <button
             onClick={() => setFilter('funded')}
@@ -84,7 +84,7 @@ export default function ProjectsPage() {
                 : 'bg-white text-gray-700 hover:bg-gray-100'
             }`}
           >
-            Fully Funded
+            Completamente Fondeados
           </button>
         </div>
 
@@ -123,7 +123,7 @@ export default function ProjectsPage() {
                           ${project.current_funding.toLocaleString()}
                         </p>
                         <div className="flex items-center text-xs text-gray-600 space-x-3">
-                          <span>pledged of ${project.goal_amount.toLocaleString()}</span>
+                          <span>recaudados de ${project.goal_amount.toLocaleString()}</span>
                         </div>
                       </div>
 
@@ -150,13 +150,13 @@ export default function ProjectsPage() {
         ) : (
           <div className="text-center py-16 bg-white rounded-xl shadow-sm">
             <div className="text-6xl mb-4">📊</div>
-            <h3 className="text-2xl font-semibold text-gray-900 mb-2">No Projects Found</h3>
-            <p className="text-gray-600 mb-6">Be the first to create a funding project!</p>
+            <h3 className="text-2xl font-semibold text-gray-900 mb-2">No Se Encontraron Proyectos</h3>
+            <p className="text-gray-600 mb-6">¡Sé el primero en crear un proyecto de financiamiento!</p>
             <Link
               href="/create-project"
               className="inline-block px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold transition-colors"
             >
-              Create Your Project
+              Crear Tu Proyecto
             </Link>
           </div>
         )}

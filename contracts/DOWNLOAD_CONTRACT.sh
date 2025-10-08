@@ -1,0 +1,12 @@
+#!/bin/bash
+echo "📦 Bochica Contract File Location:"
+echo ""
+echo "File to upload to Polkadot.js:"
+echo "/home/debian/bochica/contracts/bochica_lending_v2/target/ink/bochica_lending_v2.contract"
+echo ""
+echo "Size: 38 KB"
+echo ""
+echo "To download this file to your local machine:"
+echo "scp debian@51.178.253.51:/home/debian/bochica/contracts/bochica_lending_v2/target/ink/bochica_lending_v2.contract ~/Downloads/"
+echo ""
+echo "Then upload to: https://polkadot.js.org/apps/ (Paseo Asset Hub)"

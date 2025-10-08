@@ -1,0 +1,9 @@
+/home/debian/bochica/contracts/bochica-lending/target/debug/deps/ink_storage_traits-2f110a690a4ce668.d: /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ink_storage_traits-5.1.1/src/lib.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ink_storage_traits-5.1.1/src/impls/mod.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ink_storage_traits-5.1.1/src/storage.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ink_storage_traits-5.1.1/src/layout/mod.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ink_storage_traits-5.1.1/src/layout/impls.rs
+
+/home/debian/bochica/contracts/bochica-lending/target/debug/deps/libink_storage_traits-2f110a690a4ce668.rmeta: /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ink_storage_traits-5.1.1/src/lib.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ink_storage_traits-5.1.1/src/impls/mod.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ink_storage_traits-5.1.1/src/storage.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ink_storage_traits-5.1.1/src/layout/mod.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ink_storage_traits-5.1.1/src/layout/impls.rs
+
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ink_storage_traits-5.1.1/src/lib.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ink_storage_traits-5.1.1/src/impls/mod.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ink_storage_traits-5.1.1/src/storage.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ink_storage_traits-5.1.1/src/layout/mod.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ink_storage_traits-5.1.1/src/layout/impls.rs:

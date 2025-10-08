@@ -1,0 +1,1 @@
+ink::storage::Mapping<u32, bochica_lending::Loan>: ink::storage::traits::StorableHint<ink::storage::traits::ResolverKey<_, ink::storage::traits::ManualKey<1637764812>>>

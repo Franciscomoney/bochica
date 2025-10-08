@@ -36,10 +36,10 @@ export default function Header() {
             {isConnected && (
               <nav className="flex items-center space-x-6">
                 <Link href="/projects" className="text-gray-700 hover:text-gray-900 font-medium text-sm">
-                  Discover
+                  Descubrir
                 </Link>
                 <Link href="/create-project" className="text-gray-700 hover:text-gray-900 font-medium text-sm">
-                  Start a project
+                  Crear proyecto
                 </Link>
               </nav>
             )}
@@ -53,7 +53,7 @@ export default function Header() {
                 disabled={isConnecting}
                 className="px-5 py-2.5 bg-purple-600 text-white rounded-full hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm"
               >
-                {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+                {isConnecting ? 'Conectando...' : 'Conectar Billetera'}
               </button>
             ) : (
               <div className="flex items-center space-x-3">
@@ -67,7 +67,7 @@ export default function Header() {
                       {selectedAccount?.meta.name?.charAt(0).toUpperCase() || 'A'}
                     </div>
                     <span className="text-sm font-medium text-gray-900">
-                      {selectedAccount?.meta.name || 'Account'}
+                      {selectedAccount?.meta.name || 'Cuenta'}
                     </span>
                     <svg
                       className={`w-4 h-4 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
@@ -90,23 +90,23 @@ export default function Header() {
 
                       <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
                         <div className="p-4 border-b border-gray-200">
-                          <p className="text-xs text-gray-500 mb-1">Connected Wallet</p>
+                          <p className="text-xs text-gray-500 mb-1">Billetera Conectada</p>
                           <p className="text-sm font-mono text-gray-700 break-all">
                             {formatAddress(selectedAccount?.address || '')}
                           </p>
                         </div>
                         <div className="p-3">
                           <div className="mb-2">
-                            <p className="text-xs text-gray-500">Asset Hub Balance</p>
+                            <p className="text-xs text-gray-500">Saldo Asset Hub</p>
                             <p className="text-sm font-semibold">{assetHubBalance.toFixed(2)} USDT</p>
                           </div>
                           <div className="mb-3">
-                            <p className="text-xs text-gray-500">DOT Balance (Gas Fees)</p>
+                            <p className="text-xs text-gray-500">Saldo DOT (Comisiones de Gas)</p>
                             <p className="text-sm font-semibold">{dotBalance.toFixed(4)} DOT</p>
                             {dotBalance < 0.05 && (
                               <div className="mt-1 px-2 py-1 bg-red-50 border border-red-200 rounded">
-                                <p className="text-xs text-red-600 font-medium">⚠️ Low gas!</p>
-                                <p className="text-xs text-red-500 mt-0.5">Add ~0.1 DOT</p>
+                                <p className="text-xs text-red-600 font-medium">⚠️ Gas bajo!</p>
+                                <p className="text-xs text-red-500 mt-0.5">Agrega ~0.1 DOT</p>
                               </div>
                             )}
                           </div>
@@ -118,7 +118,7 @@ export default function Header() {
                               onClick={() => setIsDropdownOpen(false)}
                               className="block w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded transition-colors font-medium text-center"
                             >
-                              👤 Profile
+                              👤 Perfil
                             </Link>
                             <button
                               onClick={() => {
@@ -127,7 +127,7 @@ export default function Header() {
                               }}
                               className="w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded transition-colors font-medium"
                             >
-                              🔌 Disconnect Wallet
+                              🔌 Desconectar Billetera
                             </button>
                           </div>
                         </div>

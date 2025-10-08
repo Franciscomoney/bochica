@@ -1,0 +1,83 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║         BOCHICA SMART CONTRACT DEPLOYMENT TO PASEO ASSET HUB         ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+📊 DEPLOYMENT READINESS STATUS:
+
+✅ Server: Connected to OVH (51.178.253.51)
+✅ Contract File: bochica_lending_v2.contract (37.9 KB)
+✅ Network: Paseo Asset Hub Testnet
+✅ Platform Wallet: 13H5V7W5YHNNXh5bhMxXLEw4boe6R6mxEG5SFAThYyYteFLy
+✅ Available Balance: 5,000 PAS tokens
+
+═══════════════════════════════════════════════════════════════════════
+
+🔐 DEPLOYMENT SECURITY DECISION REQUIRED:
+
+You have TWO options for deploying the contract:
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ OPTION A: MANUAL DEPLOYMENT (RECOMMENDED ✅)                         │
+└─────────────────────────────────────────────────────────────────────┘
+
+✅ PROS:
+  • Your seed phrase stays 100% private
+  • You control the deployment process
+  • Full visibility into transaction details
+  • Takes only 2-3 minutes
+
+📋 STEPS:
+  1. Open: https://polkadot.js.org/apps/?rpc=wss://paseo-asset-hub-rpc.polkadot.io#/contracts
+  2. Click "Upload & deploy code"
+  3. Upload: bochica_lending_v2.contract
+  4. Set platform_wallet: 13H5V7W5YHNNXh5bhMxXLEw4boe6R6mxEG5SFAThYyYteFLy
+  5. Deploy and sign with Talisman/Polkadot.js wallet
+  6. Copy contract address and save to CONTRACT_ADDRESS_PASEO.txt
+
+📖 DETAILED GUIDE: See MANUAL_DEPLOYMENT_PASEO.md
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ OPTION B: AUTOMATED DEPLOYMENT                                      │
+└─────────────────────────────────────────────────────────────────────┘
+
+⚡ PROS:
+  • Faster (automated script)
+  • No manual UI interaction needed
+
+⚠️  CONS:
+  • Requires sharing your 12-word seed phrase
+  • Seed phrase will be temporarily stored in script
+  • Security risk if not handled properly
+
+📋 REQUIREMENTS:
+  • Your wallet's 12-word seed phrase
+  • npm install @polkadot/api @polkadot/api-contract
+  • Modified deploy-paseo.js with your seed
+
+═══════════════════════════════════════════════════════════════════════
+
+🎯 RECOMMENDATION:
+
+Use OPTION A (Manual Deployment) unless you have a specific reason to 
+automate. The manual process is quick, secure, and gives you full 
+control over the deployment.
+
+═══════════════════════════════════════════════════════════════════════
+
+❓ WHAT WOULD YOU LIKE TO DO?
+
+Reply with:
+  • "MANUAL" - I'll deploy via Polkadot.js UI (follow the guide)
+  • "AUTOMATED" - I'll provide my seed phrase for automated deployment
+  • "HELP" - I need more information about the deployment process
+
+═══════════════════════════════════════════════════════════════════════
+
+📁 FILES CREATED:
+  • deploy-paseo.js - Deployment verification script
+  • MANUAL_DEPLOYMENT_PASEO.md - Step-by-step manual deployment guide
+  • DEPLOYMENT_OPTIONS.txt - This file
+
+📍 LOCATION: /home/debian/bochica/contracts/bochica_lending_v2/
+
+═══════════════════════════════════════════════════════════════════════

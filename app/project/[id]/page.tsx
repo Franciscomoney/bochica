@@ -6,8 +6,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import { useWallet } from '@/contexts/WalletContext';
 import { calculateFundingPercentage, calculatePlatformFee } from '@/lib/financial';
-import { transferPlatformFee, transferToProjectEscrow ,
-  batchInvestmentTransfer} from '@/lib/polkadot';
+import { transferPlatformFee, transferToProjectEscrow, batchInvestmentTransfer } from '@/lib/polkadot';
 import { supabase } from '@/lib/supabase';
 
 interface Project {
@@ -20,6 +19,7 @@ interface Project {
   creator_address: string;
   interest_rate: number;
   created_at: string;
+  escrow_wallet_address: string;
 }
 
 interface ProjectBalance {
@@ -35,15 +35,15 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Investment UI state
+  // Investment state
   const [showInvestModal, setShowInvestModal] = useState(false);
   const [investAmount, setInvestAmount] = useState('');
-  const [lockupPeriod, setLockupPeriod] = useState<'10min' | '24h' | '7days'>('10min');
+  const [lockupPeriod, setLockupPeriod] = useState<'10min' | '24h' | '7days'>('24h');
   const [isInvesting, setIsInvesting] = useState(false);
   const [investError, setInvestError] = useState('');
   const [investSuccess, setInvestSuccess] = useState(false);
 
-  // Withdraw UI state
+  // Withdraw state
   const [projectBalance, setProjectBalance] = useState<ProjectBalance | null>(null);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [withdrawError, setWithdrawError] = useState('');
@@ -63,11 +63,10 @@ export default function ProjectDetailPage() {
         .single();
 
       if (dbError) throw dbError;
-
       setProject(data);
     } catch (err: any) {
       console.error('Error fetching project:', err);
-      setError(err.message || 'Failed to load project');
+      setError(err.message || 'Error al cargar el proyecto');
     } finally {
       setLoading(false);
     }
@@ -90,25 +89,19 @@ export default function ProjectDetailPage() {
   };
 
   const handleInvest = async () => {
-    if (!selectedAccount || !project) return;
+    if (!selectedAccount || !project) {
+      setInvestError('Por favor conecta tu billetera primero');
+      return;
+    }
 
     const amount = parseFloat(investAmount);
     if (isNaN(amount) || amount <= 0) {
-      setInvestError('Please enter a valid amount');
+      setInvestError('Por favor ingresa una cantidad válida');
       return;
     }
 
     if (amount > assetHubBalance) {
-      setInvestError(`Insufficient balance. You have ${assetHubBalance.toFixed(2)} USDT`);
-      return;
-    }
-
-    // Check DOT balance for gas fees
-    const estimatedGas = 0.03; // ~0.01 per transfer × 2 transfers + buffer
-    if (dotBalance < estimatedGas) {
-      setInvestError(
-        `Insufficient DOT for gas fees. You need at least ${estimatedGas} DOT but have ${dotBalance.toFixed(4)} DOT. Please add DOT to your Asset Hub wallet to pay for transaction fees.`
-      );
+      setInvestError('Fondos insuficientes en tu billetera');
       return;
     }
 
@@ -116,102 +109,45 @@ export default function ProjectDetailPage() {
     setInvestError('');
 
     try {
-      // Step 1: Execute batch transfer (fee + project amount in ONE transaction)
       const platformFee = calculatePlatformFee(amount);
-      const netAmount = amount - platformFee;
+      const netToProject = amount - platformFee;
 
-      console.log(`Investing ${amount} USDT (${platformFee.toFixed(2)} fee + ${netAmount.toFixed(2)} to project)`);
-
-      const transferResult = await batchInvestmentTransfer(
-        selectedAccount.address,
+      // Execute the batch transfer (platform fee + project funding)
+      const result = await batchInvestmentTransfer(
+        selectedAccount,
+        project.escrow_wallet_address,
         amount,
-        platformFee,
-        netAmount
+        platformFee
       );
 
-      if (!transferResult.success) {
-        throw new Error(transferResult.error || "Investment transfer failed");
-      }
-      // Step 3: Calculate lockup expiry
-      const lockupMinutesMap: Record<string, number> = {
-        '10min': 10,
-        '24h': 24 * 60,
-        '7days': 7 * 24 * 60
-      };
+      console.log('Investment successful:', result);
 
-      const lockupMinutes = lockupMinutesMap[lockupPeriod];
-      if (!lockupMinutes) {
-        throw new Error();
-      }
-
-      const lockupExpiry = new Date();
-      lockupExpiry.setMinutes(lockupExpiry.getMinutes() + lockupMinutes);
-
-      // Step 4: Create commitment record
-      const { error: commitError } = await supabase
-        .from('commitments')
-        .insert({
-          project_id: project.id,
-          investor_address: selectedAccount.address,
-          amount: amount,
-          net_amount: netAmount,
-          platform_fee: platformFee,
-          lockup_period: lockupPeriod,
-          lockup_expiry: lockupExpiry.toISOString(),
-          unlock_date: lockupExpiry.toISOString(), // Same as lockup_expiry
-          status: 'active',
-          transaction_hash: transferResult.transactionHash
-        });
-
-      if (commitError) throw commitError;
-
-      // Step 5: Update project funding AND status if fully funded
-      const newFunding = project.current_funding + netAmount;
-      const updateData: any = {
-        current_funding: newFunding
-      };
-
-      // Auto-update status to 'funded' when goal is reached
-      if (newFunding >= project.goal_amount && project.status === 'active') {
-        updateData.status = 'funded';
-      }
+      // Update project funding in database
+      const newFunding = project.current_funding + netToProject;
+      const newStatus = newFunding >= project.goal_amount ? 'funded' : 'active';
 
       const { error: updateError } = await supabase
         .from('projects')
-        .update(updateData)
+        .update({
+          current_funding: newFunding,
+          status: newStatus
+        })
         .eq('id', project.id);
 
       if (updateError) throw updateError;
 
-      // Step 6: Record transaction
-      await supabase
-        .from('transactions')
-        .insert({
-          wallet_address: selectedAccount.address,
-          type: 'commitment',
-          amount: amount,
-          project_id: project.id,
-          transaction_hash: transferResult.transactionHash,
-          details: {
-            lockup_period: lockupPeriod,
-            platform_fee: platformFee,
-            net_amount: netAmount
-          }
-        });
-
-      // Success!
       setInvestSuccess(true);
       setTimeout(() => {
         setShowInvestModal(false);
         setInvestSuccess(false);
         setInvestAmount('');
-        fetchProject(); // Refresh project data
-        fetchProjectBalance(); // Refresh balance
-      }, 3000);
+        fetchProject();
+        router.refresh();
+      }, 2000);
 
     } catch (err: any) {
       console.error('Investment error:', err);
-      setInvestError(err.message || 'Investment failed. Please try again.');
+      setInvestError(err.message || 'Error al invertir. Por favor intenta de nuevo.');
     } finally {
       setIsInvesting(false);
     }
@@ -219,7 +155,7 @@ export default function ProjectDetailPage() {
 
   const handleWithdraw = async () => {
     if (!selectedAccount || !project) {
-      setWithdrawError('Please connect your wallet first');
+      setWithdrawError('Por favor conecta tu billetera primero');
       return;
     }
 
@@ -227,12 +163,9 @@ export default function ProjectDetailPage() {
     setWithdrawError('');
 
     try {
-      // Call backend API to process real blockchain withdrawal
       const response = await fetch('/api/withdraw', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId: project.id,
           creatorAddress: selectedAccount.address
@@ -240,34 +173,26 @@ export default function ProjectDetailPage() {
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Withdrawal failed');
-      }
-
-      // Success! Show transaction details
-      console.log('Withdrawal successful:', data);
-      console.log(`Transaction hash: ${data.txHash}`);
-      console.log(`Amount: ${data.amount} USDT`);
-      console.log(`Loan repayment: ${data.totalRepayment} USDT due ${data.dueDate}`);
+      if (!response.ok) throw new Error(data.error || 'Error al retirar fondos');
 
       setWithdrawSuccess(true);
-
-      // Refresh data after 3 seconds
       setTimeout(() => {
         setWithdrawSuccess(false);
         fetchProject();
         fetchProjectBalance();
         router.refresh();
       }, 3000);
-
     } catch (err: any) {
       console.error('Withdrawal error:', err);
-      setWithdrawError(err.message || 'Withdrawal failed. Please try again.');
+      setWithdrawError(err.message || 'Error al retirar fondos. Por favor intenta de nuevo.');
     } finally {
       setIsWithdrawing(false);
     }
   };
+
+  const amount = parseFloat(investAmount) || 0;
+  const platformFee = calculatePlatformFee(amount);
+  const netAmount = amount - platformFee;
 
   if (loading) {
     return (
@@ -275,7 +200,7 @@ export default function ProjectDetailPage() {
         <Header />
         <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center py-16">
-            <div className="text-lg">Loading project...</div>
+            <div className="text-lg">Cargando proyecto...</div>
           </div>
         </main>
       </div>
@@ -289,13 +214,10 @@ export default function ProjectDetailPage() {
         <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="bg-red-50 border-2 border-red-200 rounded-xl p-8 text-center">
             <div className="text-5xl mb-4">❌</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Project Not Found</h2>
-            <p className="text-gray-600 mb-6">{error || 'This project does not exist'}</p>
-            <Link
-              href="/projects"
-              className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold"
-            >
-              Browse Projects
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Proyecto No Encontrado</h2>
+            <p className="text-gray-600 mb-6">{error || 'Este proyecto no existe'}</p>
+            <Link href="/projects" className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold">
+              Ver Proyectos
             </Link>
           </div>
         </main>
@@ -307,21 +229,15 @@ export default function ProjectDetailPage() {
   const isFullyFunded = progress >= 100;
   const isCreator = selectedAccount?.address === project.creator_address;
   const canWithdraw = isCreator && isFullyFunded && project.status === 'funded';
-  const amount = parseFloat(investAmount) || 0;
-  const platformFee = calculatePlatformFee(amount);
-  const netAmount = amount - platformFee;
+  const hasWithdrawn = isCreator && project.status === "completed" && project.withdrawal_tx_hash;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Back Button */}
-        <Link
-          href="/projects"
-          className="inline-flex items-center text-purple-600 hover:text-purple-800 mb-6"
-        >
-          ← Back to Projects
+        <Link href="/projects" className="inline-flex items-center text-purple-600 hover:text-purple-800 mb-6">
+          ← Volver a Proyectos
         </Link>
 
         {/* Project Header */}
@@ -330,96 +246,116 @@ export default function ProjectDetailPage() {
             <h1 className="text-4xl font-bold text-gray-900">{project.title}</h1>
             {isFullyFunded && (
               <span className="px-4 py-2 bg-green-100 text-green-700 text-sm font-semibold rounded-full">
-                ✓ Fully Funded
+                ✓ Completamente Fondeado
               </span>
             )}
           </div>
 
-          {/* Project Meta */}
           <div className="flex items-center space-x-6 text-sm text-gray-600 mb-6">
             <div>
-              <span className="font-semibold">Created:</span>{' '}
-              {new Date(project.created_at).toLocaleDateString()}
+              <span className="font-semibold">Creado:</span> {new Date(project.created_at).toLocaleDateString()}
             </div>
             <div>
-              <span className="font-semibold">Interest Rate:</span>{' '}
-              <span className="text-green-600 font-bold">{project.interest_rate}%</span>
+              <span className="font-semibold">Tasa de Interés:</span> <span className="text-green-600 font-bold">{project.interest_rate}%</span>
             </div>
             <div>
-              <span className="font-semibold">Status:</span>{' '}
-              <span className="capitalize">{project.status}</span>
+              <span className="font-semibold">Estado:</span> <span className="capitalize">{project.status}</span>
             </div>
             {isCreator && (
               <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-semibold">
-                Your Project
+                Tu Proyecto
               </div>
             )}
           </div>
 
-          {/* Funding Progress */}
           <div className="mb-6">
             <div className="flex justify-between items-center mb-3">
-              <span className="text-lg font-semibold text-gray-900">Funding Progress</span>
+              <span className="text-lg font-semibold text-gray-900">Progreso de Financiamiento</span>
               <span className="text-2xl font-bold text-purple-600">{progress.toFixed(1)}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
               <div
-                className={`h-6 rounded-full transition-all duration-500 ${
-                  isFullyFunded ? 'bg-green-500' : 'bg-purple-600'
-                }`}
+                className={`h-6 rounded-full transition-all duration-500 ${isFullyFunded ? 'bg-green-500' : 'bg-purple-600'}`}
                 style={{ width: `${Math.min(progress, 100)}%` }}
               />
             </div>
             <div className="flex justify-between text-lg mt-3">
-              <span className="font-bold text-gray-900">
-                ${project.current_funding.toLocaleString()} raised
-              </span>
-              <span className="text-gray-600">
-                of ${project.goal_amount.toLocaleString()} goal
-              </span>
+              <span className="font-bold text-gray-900">${project.current_funding.toLocaleString()} recaudados</span>
+              <span className="text-gray-600">de ${project.goal_amount.toLocaleString()} meta</span>
             </div>
           </div>
 
-          {/* Creator Info */}
           <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-sm font-medium text-gray-700 mb-1">Project Creator</p>
-            <p className="text-xs text-gray-600 font-mono break-all">
-              {project.creator_address}
-            </p>
+            <p className="text-sm font-medium text-gray-700 mb-1">Creador del Proyecto</p>
+            <p className="text-xs text-gray-600 font-mono break-all">{project.creator_address}</p>
           </div>
         </div>
 
         {/* Project Description */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">About This Project</h2>
-          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-            {project.description}
-          </p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Acerca de Este Proyecto</h2>
+          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{project.description}</p>
         </div>
 
-        {/* Withdrawal Section - Only for Project Creator */}
+        {/* Withdrawal Completed Message */}
+        {hasWithdrawn && (
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-8 text-white mb-6">
+            <div className="flex items-start space-x-4">
+              <div className="text-5xl">✅</div>
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold mb-2">Retiro Completado</h2>
+                <p className="mb-4 text-blue-100">
+                  Retiraste el monto completo de <span className="font-bold">${project.current_funding.toFixed(2)} USDT</span> el{' '}
+                  {new Date(project.withdrawal_date!).toLocaleDateString('es-ES', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </p>
+                <div className="bg-blue-700 bg-opacity-50 rounded-lg p-4 text-sm">
+                  <p className="font-semibold mb-2">📋 Detalles de la Transacción:</p>
+                  <div className="space-y-1 text-blue-50">
+                    <p><strong>Hash:</strong> {project.withdrawal_tx_hash?.slice(0, 20)}...{project.withdrawal_tx_hash?.slice(-20)}</p>
+                    <p><strong>Comisión Plataforma:</strong> ${project.platform_fee_paid?.toFixed(2) || '0.00'} USDT (2%)</p>
+                    <p><strong>Monto Recibido:</strong> ${(project.current_funding - (project.platform_fee_paid || 0)).toFixed(2)} USDT</p>
+                  </div>
+                  <a
+                    href={`https://assethub-polkadot.subscan.io/extrinsic/${project.withdrawal_tx_hash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block mt-3 px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 font-semibold text-sm transition-colors"
+                  >
+                    Ver en Subscan →
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Withdrawal Section */}
         {canWithdraw && (
           <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-8 text-white mb-6">
-            <h2 className="text-2xl font-bold mb-2">Request Withdrawal</h2>
+            <h2 className="text-2xl font-bold mb-2">Solicitar Retiro</h2>
             <p className="mb-2 text-green-100">
-              Your project is fully funded! Click below to request withdrawal of{' '}
+              ¡Tu proyecto está completamente fondeado! Haz clic abajo para solicitar el retiro de{' '}
               <span className="font-bold text-white">
                 ${projectBalance?.available_balance?.toFixed(2) || project.current_funding.toFixed(2)} USDT
-              </span>
-              {' '}to your wallet.
+              </span>{' '}
+              a tu billetera.
             </p>
             <div className="mb-4 bg-green-700 bg-opacity-50 rounded-lg p-4 text-sm text-green-50">
-              <p className="font-semibold mb-1">ℹ️ How it works:</p>
+              <p className="font-semibold mb-1">ℹ️ Cómo funciona:</p>
               <ol className="list-decimal list-inside space-y-1">
-                <li>You submit a withdrawal request</li>
-                <li>Funds are transferred immediately from the escrow wallet to your address</li>
-                <li>You'll receive the USDT instantly upon approval</li>
-                <li>A loan is created that you must repay with {project.interest_rate}% interest within 30 days</li>
+                <li>Envías una solicitud de retiro</li>
+                <li>Los fondos se transfieren inmediatamente desde la billetera de garantía a tu dirección</li>
+                <li>Recibirás el USDT instantáneamente al aprobar</li>
+                <li>Se crea un préstamo que debes pagar con {project.interest_rate}% de interés en 30 días</li>
               </ol>
             </div>
             {projectBalance && projectBalance.withdrawn_balance > 0 && (
               <p className="mb-4 text-sm text-green-200">
-                Previously requested: ${projectBalance.withdrawn_balance.toFixed(2)} USDT
+                Solicitado previamente: ${projectBalance.withdrawn_balance.toFixed(2)} USDT
               </p>
             )}
             <button
@@ -427,7 +363,7 @@ export default function ProjectDetailPage() {
               disabled={isWithdrawing}
               className="px-8 py-4 bg-white text-green-600 rounded-lg hover:bg-gray-100 font-bold text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isWithdrawing ? 'Submitting Request...' : 'Request Withdrawal'}
+              {isWithdrawing ? 'Enviando Solicitud...' : 'Solicitar Retiro'}
             </button>
             {withdrawError && (
               <div className="mt-4 bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-lg">
@@ -436,7 +372,7 @@ export default function ProjectDetailPage() {
             )}
             {withdrawSuccess && (
               <div className="mt-4 bg-white border border-green-300 text-green-800 px-4 py-3 rounded-lg">
-                ✅ Withdrawal request submitted successfully! Funds will be transferred immediately - {projectBalance?.available_balance?.toFixed(2) || project.current_funding.toFixed(2)} USDT will be sent to your wallet. You will receive a notification when the transfer is complete.
+                ✅ ¡Solicitud de retiro enviada exitosamente! Los fondos serán transferidos inmediatamente.
               </div>
             )}
           </div>
@@ -445,15 +381,15 @@ export default function ProjectDetailPage() {
         {/* Investment Section */}
         {isConnected && !isCreator && project.status === 'active' && (
           <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-8 text-white">
-            <h2 className="text-2xl font-bold mb-4">Lend to This Project</h2>
+            <h2 className="text-2xl font-bold mb-4">Invertir en Este Proyecto</h2>
             <p className="mb-6 text-purple-100">
-              Support this entrepreneur by committing funds. Earn {project.interest_rate}% interest when they repay.
+              Apoya a este emprendedor comprometiendo fondos. Gana {project.interest_rate}% de interés cuando pague.
             </p>
             <button
               className="px-8 py-4 bg-white text-purple-600 rounded-lg hover:bg-gray-100 font-bold text-lg transition-colors"
               onClick={() => setShowInvestModal(true)}
             >
-              Commit Funds →
+              Comprometer Fondos →
             </button>
           </div>
         )}
@@ -467,36 +403,30 @@ export default function ProjectDetailPage() {
                 {investSuccess ? (
                   <div className="text-center">
                     <div className="text-6xl mb-4">✅</div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">Investment Successful!</h3>
-                    <p className="text-gray-600">Your funds have been committed to this project.</p>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">¡Inversión Exitosa!</h3>
+                    <p className="text-gray-600">Tus fondos han sido comprometidos a este proyecto.</p>
                   </div>
                 ) : (
                   <>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Commit Funds</h3>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Comprometer Fondos</h3>
 
-                    {/* Amount Input */}
                     <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Amount (USDT)
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Cantidad (USDT)</label>
                       <input
                         type="number"
                         step="0.01"
                         value={investAmount}
                         onChange={(e) => setInvestAmount(e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        placeholder="Enter amount"
+                        placeholder="Ingresa cantidad"
                       />
                       <p className="text-sm text-gray-500 mt-1">
-                        Available: {assetHubBalance.toFixed(2)} USDT
+                        Disponible: {assetHubBalance.toFixed(2)} USDT
                       </p>
                     </div>
 
-                    {/* Lockup Period */}
                     <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Lockup Period
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Período de Bloqueo</label>
                       <div className="grid grid-cols-3 gap-2">
                         {(['10min', '24h', '7days'] as const).map((period) => (
                           <button
@@ -513,66 +443,63 @@ export default function ProjectDetailPage() {
                         ))}
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
-                        Funds are locked until creator borrows or lockup expires
+                        Fondos bloqueados hasta que el creador pida prestado o expire el bloqueo
                       </p>
                     </div>
 
-                    {/* Fee Breakdown */}
                     {amount > 0 && (
                       <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Investment Amount:</span>
+                          <span className="text-gray-600">Monto de Inversión:</span>
                           <span className="font-semibold">${amount.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Platform Fee (2%):</span>
+                          <span className="text-gray-600">Comisión Plataforma (2%):</span>
                           <span className="font-semibold text-red-600">-${platformFee.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between pt-2 border-t border-gray-200">
-                          <span className="text-gray-900 font-semibold">Net to Project:</span>
+                          <span className="text-gray-900 font-semibold">Neto al Proyecto:</span>
                           <span className="font-bold text-purple-600">${netAmount.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-green-600">
-                          <span>Expected Return ({project.interest_rate}%):</span>
+                          <span>Retorno Esperado ({project.interest_rate}%):</span>
                           <span className="font-bold">${(amount * (1 + project.interest_rate / 100)).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between pt-2 border-t border-gray-200">
-                          <span className="text-gray-600">Gas Fee (DOT):</span>
+                          <span className="text-gray-600">Comisión de Gas (DOT):</span>
                           <span className="font-semibold">~0.02 DOT (~$0.14)</span>
                         </div>
                         {dotBalance < 0.05 && (
                           <div className="mt-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded">
-                            <p className="text-xs text-yellow-700 font-medium">⚠️ Low DOT balance!</p>
+                            <p className="text-xs text-yellow-700 font-medium">⚠️ ¡Saldo DOT bajo!</p>
                             <p className="text-xs text-yellow-600 mt-0.5">
-                              You have {dotBalance.toFixed(4)} DOT. Make sure you have enough for gas fees.
+                              Tienes {dotBalance.toFixed(4)} DOT. Asegúrate de tener suficiente para comisiones de gas.
                             </p>
                           </div>
                         )}
                       </div>
                     )}
 
-                    {/* Error Message */}
                     {investError && (
                       <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
                         {investError}
                       </div>
                     )}
 
-                    {/* Action Buttons */}
                     <div className="flex space-x-3">
                       <button
                         onClick={() => setShowInvestModal(false)}
                         className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold transition-colors"
                         disabled={isInvesting}
                       >
-                        Cancel
+                        Cancelar
                       </button>
                       <button
                         onClick={handleInvest}
                         disabled={isInvesting || !investAmount || amount <= 0}
                         className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 font-semibold transition-colors"
                       >
-                        {isInvesting ? 'Processing...' : 'Commit Funds'}
+                        {isInvesting ? 'Procesando...' : 'Comprometer Fondos'}
                       </button>
                     </div>
                   </>
@@ -582,13 +509,12 @@ export default function ProjectDetailPage() {
           </>
         )}
 
-        {/* Not Connected Message */}
-        {!isConnected && (
+        {!isConnected && project.status === 'active' && (
           <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-8 text-center">
             <div className="text-5xl mb-4">🔒</div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Connect Your Wallet</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Conecta Tu Billetera</h3>
             <p className="text-gray-600">
-              Connect your Talisman wallet to invest in this project
+              Conecta tu billetera Talisman para invertir en este proyecto
             </p>
           </div>
         )}

@@ -1,0 +1,10 @@
+CORRECT ESCROW WALLET SEED PHRASE
+==================================
+shoot nest corn gym heart monster sad excuse actress auto end copy
+
+This is the seed phrase that generates:
+- Asset Hub address: 15SF1r3zuTgRB8yt6mDSTcXtaQZqVv1YpDCyUoV7E3bSJfSf
+- Substrate address: 5GVwsWnw3gQwjbyN98ASKThjinaBocTQjiUVKWVkfxZv8LrX
+
+DO NOT CONFUSE WITH:
+- The old test seed: "portion garbage shadow carry author fork sugar pull symptom calm alien asthma"

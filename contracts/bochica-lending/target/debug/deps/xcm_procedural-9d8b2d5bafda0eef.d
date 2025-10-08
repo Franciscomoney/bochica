@@ -1,0 +1,10 @@
+/home/debian/bochica/contracts/bochica-lending/target/debug/deps/xcm_procedural-9d8b2d5bafda0eef.d: /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/lib.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/builder_pattern.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/v2.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/v3.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/v4.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/weight_info.rs
+
+/home/debian/bochica/contracts/bochica-lending/target/debug/deps/libxcm_procedural-9d8b2d5bafda0eef.so: /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/lib.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/builder_pattern.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/v2.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/v3.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/v4.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/weight_info.rs
+
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/lib.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/builder_pattern.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/v2.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/v3.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/v4.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xcm-procedural-8.0.0/src/weight_info.rs:
