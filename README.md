@@ -49,6 +49,7 @@ A blockchain-powered micro-lending platform built on Polkadot's parachain archit
 - ✅ **Role Switcher** - Toggle between Investor/Creator
 - ✅ **Custom Interest Rates** - Creators set their own rates (0-100%)
 - ✅ **Lockup Periods** - 10min (testing), 24h, 7days
+- ✅ **User Profile** - Shows created projects, funded projects, DOT and USDT balances
 
 ---
 
@@ -426,7 +427,7 @@ Built with:
 
 ---
 
-**Last Updated**: October 6, 2025  
+**Last Updated**: October 8, 2025  
 **Status**: MVP Complete ✅  
 **Next Milestone**: Borrowing System
 
