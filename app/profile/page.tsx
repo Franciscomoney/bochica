@@ -24,7 +24,7 @@ interface Investment {
 }
 
 export default function ProfilePage() {
-  const { selectedAccount, assetHubBalance, polkadotBalance, formatAddress } = useWallet();
+  const { selectedAccount, assetHubBalance, dotBalance, formatAddress } = useWallet();
   const [createdProjects, setCreatedProjects] = useState<Project[]>([]);
   const [fundedProjects, setFundedProjects] = useState<Investment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +119,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white p-4 rounded-lg border border-gray-200">
                 <p className="text-xs text-gray-500 mb-1">DOT</p>
-                <p className="text-2xl font-bold text-gray-900">{polkadotBalance.toFixed(4)}</p>
+                <p className="text-2xl font-bold text-gray-900">{dotBalance.toFixed(4)}</p>
               </div>
               <div className="bg-white p-4 rounded-lg border border-gray-200">
                 <p className="text-xs text-gray-500 mb-1">USDT</p>
