@@ -60,14 +60,24 @@ export async function POST(request: Request) {
     }
 
     // Calculate split (98% creator, 2% platform)
+    // IMPORTANT: Work in USDT units (6 decimals) to avoid rounding errors
     const totalAmount = project.current_funding;
-    const platformFeeAmount = Math.floor(totalAmount * 0.02 * 100) / 100;
-    const creatorAmount = totalAmount - platformFeeAmount;
+    const totalUnits = Math.floor(totalAmount * 1000000); // Convert to 6-decimal units
+    
+    const platformUnits = Math.floor(totalUnits * 0.02); // 2% in units
+    const creatorUnits = totalUnits - platformUnits; // Remainder to creator
+    
+    // Convert back to display amounts
+    const platformFeeAmount = platformUnits / 1000000;
+    const creatorAmount = creatorUnits / 1000000;
 
     console.log('[WITHDRAW] Amounts:', {
       total: totalAmount,
+      totalUnits,
       creator: creatorAmount,
-      platformFee: platformFeeAmount
+      creatorUnits,
+      platformFee: platformFeeAmount,
+      platformUnits
     });
 
     // Get THE escrow account with derivation path //1
@@ -101,9 +111,6 @@ export async function POST(request: Request) {
     const wsProvider = new WsProvider(ASSET_HUB_RPC);
     const api = await ApiPromise.create({ provider: wsProvider });
 
-    // Convert amounts to 6 decimal units (USDT uses 6 decimals)
-    const creatorUnits = Math.floor(creatorAmount * 1000000);
-    const platformUnits = Math.floor(platformFeeAmount * 1000000);
 
     console.log('[WITHDRAW] Transfer units:', {
       creatorUnits,

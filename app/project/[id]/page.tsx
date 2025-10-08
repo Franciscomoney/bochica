@@ -122,6 +122,31 @@ export default function ProjectDetailPage() {
 
       console.log('Investment successful:', result);
 
+      // Record the commitment in database
+      const unlockDate = new Date();
+      if (lockupPeriod === '10min') unlockDate.setMinutes(unlockDate.getMinutes() + 10);
+      else if (lockupPeriod === '24h') unlockDate.setHours(unlockDate.getHours() + 24);
+      else if (lockupPeriod === '7days') unlockDate.setDate(unlockDate.getDate() + 7);
+
+      const { error: commitmentError } = await supabase
+        .from('commitments')
+        .insert({
+          project_id: project.id,
+          investor_address: selectedAccount.address,
+          amount: amount,
+          net_amount: netToProject,
+          platform_fee: platformFee,
+          lockup_period: lockupPeriod,
+          unlock_date: unlockDate.toISOString(),
+          status: 'active',
+          transaction_hash: result.txHash || result.hash || null
+        });
+
+      if (commitmentError) {
+        console.error('Warning: Failed to record commitment:', commitmentError);
+        // Don't fail the whole investment, but log it
+      }
+
       // Update project funding in database
       const newFunding = project.current_funding + netToProject;
       const newStatus = newFunding >= project.goal_amount ? 'funded' : 'active';
