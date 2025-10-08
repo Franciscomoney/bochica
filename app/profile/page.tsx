@@ -50,10 +50,9 @@ export default function ProfilePage() {
     }
 
     const { data: investments } = await supabase
-      .from('transactions')
+      .from('commitments')
       .select('project_id, amount, project:projects(id, title)')
       .eq('investor_address', selectedAccount.address)
-      .eq('transaction_type', 'investment')
       .order('created_at', { ascending: false });
 
     if (investments) {
