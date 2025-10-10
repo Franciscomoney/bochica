@@ -480,7 +480,7 @@ export const batchInvestmentTransfer = async (
     
     return {
       success: true,
-      transactionHash: hash.toHex()
+      txHash: hash.toHex(), hash: hash.toHex()
     };
   } catch (error: any) {
     console.error("Batch investment transfer failed:", error);
