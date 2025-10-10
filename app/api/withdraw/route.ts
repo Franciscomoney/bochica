@@ -59,25 +59,17 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    // Calculate split (98% creator, 2% platform)
-    // IMPORTANT: Work in USDT units (6 decimals) to avoid rounding errors
+    // Creator receives 100% of available balance
+    // Platform fee was already taken during investment (2% deducted from lenders)
     const totalAmount = project.current_funding;
-    const totalUnits = Math.floor(totalAmount * 1000000); // Convert to 6-decimal units
-    
-    const platformUnits = Math.floor(totalUnits * 0.02); // 2% in units
-    const creatorUnits = totalUnits - platformUnits; // Remainder to creator
-    
-    // Convert back to display amounts
-    const platformFeeAmount = platformUnits / 1000000;
-    const creatorAmount = creatorUnits / 1000000;
+    const creatorAmount = totalAmount;
+    const platformFeeAmount = 0; // No additional fee - already collected
 
     console.log('[WITHDRAW] Amounts:', {
       total: totalAmount,
-      totalUnits,
       creator: creatorAmount,
-      creatorUnits,
-      platformFee: platformFeeAmount,
-      platformUnits
+      creatorUnits: Math.floor(creatorAmount * 1000000),
+      platformFee: platformFeeAmount
     });
 
     // Get THE escrow account with derivation path //1
@@ -112,16 +104,12 @@ export async function POST(request: Request) {
     const api = await ApiPromise.create({ provider: wsProvider });
 
 
-    console.log('[WITHDRAW] Transfer units:', {
-      creatorUnits,
-      platformUnits
-    });
 
-    // Create batch transfer
-    const batchTx = api.tx.utility.batchAll([
-      api.tx.assets.transfer(USDT_ASSET_ID, creatorAddress, creatorUnits),
-      api.tx.assets.transfer(USDT_ASSET_ID, PLATFORM_WALLET, platformUnits)
-    ]);
+
+    // Transfer full amount to creator
+    const creatorUnits = Math.floor(creatorAmount * 1000000);
+    
+    const batchTx = api.tx.assets.transfer(USDT_ASSET_ID, creatorAddress, creatorUnits);
 
     console.log('[WITHDRAW] Signing and sending transaction...');
 
